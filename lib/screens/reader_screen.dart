@@ -249,10 +249,10 @@ class _MushafPage extends StatelessWidget {
         final paddingV = maxH * 0.012;
         final bismillahH = showBismillah ? maxH * 0.04 : 0.0;
         final headerH = maxH * 0.04;
-        // حساب ارتفاع فواصل السور
+        // حساب ارتفاع فواصل السور (+ مساحة أمان للعناصرﻹضافية)
         final separatorCount = segments.length > 1 ? segments.length - 1 : 0;
-        final separatorH = separatorCount * (maxH * 0.08); // ~8% per separator
-        final textAreaH = maxH - paddingV * 2 - bismillahH - headerH - separatorH;
+        final separatorH = separatorCount * (maxH * 0.10); // ~10% per separator (divider + icon + name + bismillah)
+        final textAreaH = (maxH - paddingV * 2 - bismillahH - headerH - separatorH) * 0.92; // safety margin 8%
         final textAreaW = maxW - 24; // padding horizontal
 
         // بناء نص الآيات الكامل مع فواصل السور
@@ -279,6 +279,7 @@ class _MushafPage extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
           padding: EdgeInsets.symmetric(
               horizontal: 12, vertical: paddingV),
+          clipBehavior: Clip.hardEdge,
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(8),
