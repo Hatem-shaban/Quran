@@ -7,7 +7,10 @@ enum QuranFont {
   scheherazade('Scheherazade New', 'Scheherazade New'),
   notoNaskh('Noto Naskh Arabic', 'Noto Naskh Arabic'),
   amiri('Amiri', 'Amiri'),
-  lateef('Lateef', 'Lateef');
+  lateef('Lateef', 'Lateef'),
+  cairo('Cairo', 'Cairo'),
+  tajawal('Tajawal', 'Tajawal'),
+  almarai('Almarai', 'Almarai');
 
   const QuranFont(this.displayName, this.familyName);
 
