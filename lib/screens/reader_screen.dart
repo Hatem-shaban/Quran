@@ -187,9 +187,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
               final page = _pages[index];
               // ابدأ بسم الله في أول صفحة لكل سورة ما عدا الفاتحة والتوبة
               final firstChapter = page.verses.first.chapter;
-              final isFirstPage = index == 0 ||
-                  _pages[index - 1].verses.first.chapter != firstChapter;
-              final showBismillah = isFirstPage &&
+              // اعرض البسملة فقط إذا كانت الصفحة تبدأ بآية ١ في سورة جديدة
+              final showBismillah = page.verses.first.number == 1 &&
                   firstChapter != 1 && firstChapter != 9;
               final juz = Juz.of(firstChapter, page.verses.first.number);
               return _MushafPage(
@@ -351,7 +350,7 @@ class _MushafPage extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'سورة ${surahNames?[segments[s].chapter] ?? ''}',
+                                  '${surahNames?[segments[s].chapter] ?? ''}',
                                   style: TextStyle(
                                     fontFamily: fontFamily,
                                     fontSize: fontSize * 0.85,
