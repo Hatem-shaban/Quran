@@ -425,36 +425,56 @@ class _MushafPageState extends State<_MushafPage> {
                 ),
               ],
 
-              // ── محتوى الآيات — كOLUMN مع فواصل ونصوص منسابة ──
+              // ── محتوى الآيات — فواصل + نصوص منسابة بدون قيود Expanded ──
               Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (int s = 0; s < segments.length; s++) ...[
-                      // ── فاصل السورة (ليس أول عنصر) ──
-                      if (s > 0)
-                        _SurahSeparator(
-                          surahName: widget.surahNames?[segments[s].chapter] ?? '',
-                          showBismillah: segments[s].chapter != 1 && segments[s].chapter != 9,
-                          fontFamily: widget.fontFamily,
-                          fontSize: fontSize,
-                          theme: theme,
-                        ),
-                      // ── آيات السورة كفقرة واحدة منسابة ──
-                      Expanded(
-                        child: _SegmentText(
-                          verses: segments[s].verses,
-                          fontSize: fontSize,
-                          lineHeight: lineHeight,
-                          fontFamily: widget.fontFamily,
-                          theme: theme,
-                          bookmarkService: widget.bookmarkService,
-                          onVerseTap: widget.onVerseTap,
-                          recognizers: _recognizers,
-                        ),
-                      ),
-                    ],
-                  ],
+                child: LayoutBuilder(
+                  builder: (context, innerConstraints) {
+                    // حساب ارتفاع المحتوى الفعلي
+                    final contentHeight = _estimateContentHeight(
+                      segments: segments,
+                      fontSize: fontSize,
+                      lineHeight: lineHeight,
+                      fontFamily: widget.fontFamily,
+                      textAreaW: textAreaW,
+                    );
+                    final fitsNaturally = contentHeight <= verseAreaH + 10;
+
+                    final content = Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (int s = 0; s < segments.length; s++) ...[
+                          if (s > 0)
+                            _SurahSeparator(
+                              surahName: widget.surahNames?[segments[s].chapter] ?? '',
+                              showBismillah: segments[s].chapter != 1 && segments[s].chapter != 9,
+                              fontFamily: widget.fontFamily,
+                              fontSize: fontSize,
+                              theme: theme,
+                            ),
+                          _SegmentText(
+                            verses: segments[s].verses,
+                            fontSize: fontSize,
+                            lineHeight: lineHeight,
+                            fontFamily: widget.fontFamily,
+                            theme: theme,
+                            bookmarkService: widget.bookmarkService,
+                            onVerseTap: widget.onVerseTap,
+                            recognizers: _recognizers,
+                          ),
+                        ],
+                      ],
+                    );
+
+                    // إذا النص يتناسب مع المساحة — لا نسمح بالتمرير
+                    if (fitsNaturally) {
+                      return Center(child: content);
+                    }
+                    // وإلا — نسمح بتمرير كشبكة أمان
+                    return SingleChildScrollView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      child: content,
+                    );
+                  },
                 ),
               ),
             ],
@@ -515,6 +535,45 @@ class _MushafPageState extends State<_MushafPage> {
     }
 
     return bestSize;
+  }
+
+  /// تقدير ارتفاع المحتوى الكلي (فواصل + نصوص) بحجم خط معين.
+  double _estimateContentHeight({
+    required List<_VerseSegment> segments,
+    required double fontSize,
+    required double lineHeight,
+    required String fontFamily,
+    required double textAreaW,
+  }) {
+    final buffer = StringBuffer();
+    for (final segment in segments) {
+      for (final v in segment.verses) {
+        buffer.write('${v.text} ﴿${toArabicDigits(v.number)}﴾  ');
+      }
+    }
+    final fullText = buffer.toString();
+
+    final painter = TextPainter(
+      text: TextSpan(
+        text: fullText,
+        style: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: fontSize,
+          height: lineHeight,
+        ),
+      ),
+      textDirection: TextDirection.rtl,
+      textAlign: TextAlign.center,
+      maxLines: null,
+    );
+    painter.layout(maxWidth: textAreaW);
+    final textH = painter.height;
+    painter.dispose();
+
+    final separatorCount = segments.length > 1 ? segments.length - 1 : 0;
+    final separatorH = separatorCount * 68.0;
+
+    return textH + separatorH;
   }
 }
 
