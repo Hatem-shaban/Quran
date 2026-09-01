@@ -252,7 +252,7 @@ class _MushafPage extends StatelessWidget {
         // حساب ارتفاع فواصل السور (+ مساحة أمان للعناصرﻹضافية)
         final separatorCount = segments.length > 1 ? segments.length - 1 : 0;
         final separatorH = separatorCount * (maxH * 0.10); // ~10% per separator (divider + icon + name + bismillah)
-        final textAreaH = (maxH - paddingV * 2 - bismillahH - headerH - separatorH) * 0.92; // safety margin 8%
+        final textAreaH = (maxH - paddingV * 2 - bismillahH - headerH - separatorH) * 0.85 - 40; // safety margin 15% + 40px buffer for TextPainter vs rendering discrepancy
         final textAreaW = maxW - 24; // padding horizontal
 
         // بناء نص الآيات الكامل مع فواصل السور
@@ -279,7 +279,6 @@ class _MushafPage extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
           padding: EdgeInsets.symmetric(
               horizontal: 12, vertical: paddingV),
-          clipBehavior: Clip.hardEdge,
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(8),
@@ -326,12 +325,10 @@ class _MushafPage extends StatelessWidget {
               ],
               // الآيات
               Expanded(
-                child: SingleChildScrollView(
-                  physics: const NeverScrollableScrollPhysics(),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (int s = 0; s < segments.length; s++) ...[
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (int s = 0; s < segments.length; s++) ...[
                         if (s > 0)
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 6),
@@ -408,7 +405,6 @@ class _MushafPage extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
             ],
           ),
         );
