@@ -39,6 +39,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   late final List<_PageData> _pages;
   int _currentPageIndex = 0;
   Surah? _currentSurah;
+  bool _initialSaveDone = false;
 
   Surah get _displaySurah => _currentSurah ?? widget.surah;
 
@@ -62,8 +63,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   List<_PageData> _buildAllPages() {
     final pageMap = <int, List<Verse>>{};
     for (final verse in widget.quranService.allVerses) {
-      final pageNum = widget.quranService.pageOf(
-          verse.chapter, verse.number);
+      final pageNum = widget.quranService.pageOf(verse.chapter, verse.number);
       (pageMap[pageNum] ??= []).add(verse);
     }
     return [
@@ -73,6 +73,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
           pageNumber: entry.key,
         ),
     ]..sort((a, b) => a.pageNumber.compareTo(b.pageNumber));
+  }
+
+  void _saveCurrentPosition() {
+    if (_currentPageIndex < 0 || _currentPageIndex >= _pages.length) return;
+    final page = _pages[_currentPageIndex];
+    final firstVerse = page.verses.first;
+    widget.bookmarkService.setLastRead(firstVerse.chapter, firstVerse.number);
   }
 
   void _onPageChanged(int index) {
@@ -93,21 +100,32 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _positionSaveDebounce?.cancel();
     _positionSaveDebounce = Timer(const Duration(milliseconds: 400), () {
       if (!mounted) return;
-      widget.bookmarkService.setLastRead(
-          firstVerse.chapter, firstVerse.number);
+      _saveCurrentPosition();
+    });
+  }
+
+  /// حفظ الموضع الحالي عند بناء الصفحة الأولى.
+  void _onPageBuilt() {
+    if (_initialSaveDone) return;
+    _initialSaveDone = true;
+    // تأخير بسيط للتأكد من أن الصفحة نشطة
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) _saveCurrentPosition();
     });
   }
 
   @override
   void dispose() {
     _positionSaveDebounce?.cancel();
+    // حفظ الموضع الأخير عند مغادرة الشاشة
+    _saveCurrentPosition();
     _pageController.dispose();
     super.dispose();
   }
 
   Future<void> _showVerseActions(Verse verse) async {
-    final isBookmarked =
-        widget.bookmarkService.isBookmarked(verse.key);
+    final isBookmarked = widget.bookmarkService.isBookmarked(verse.key);
+    final surah = widget.quranService.surahOf(verse.chapter);
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -115,6 +133,33 @@ class _ReaderScreenState extends State<ReaderScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // معاينة الآية
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+              child: Text(
+                verse.text,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: widget.settingsService?.fontFamily ?? 'Amiri Quran',
+                  fontSize: 20,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                textDirection: TextDirection.rtl,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                '﴿${toArabicDigits(verse.number)}﴾ سورة ${surah.name}',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const Divider(height: 1),
             ListTile(
               leading: Icon(
                 isBookmarked ? Icons.bookmark_remove : Icons.bookmark_add,
@@ -134,7 +179,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
               onTap: () {
                 Clipboard.setData(ClipboardData(
                     text:
-                        '${verse.text}\n﴿${toArabicDigits(verse.number)}﴾ ${widget.surah.name}'));
+                        '${verse.text}\n﴿${toArabicDigits(verse.number)}﴾ سورة ${surah.name}'));
                 Navigator.of(sheetContext).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('تم نسخ الآية')),
@@ -153,8 +198,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       builder: (_) => const _JumpDialog(),
     );
     if (result != null && mounted) {
-      final targetIndex =
-          _pages.indexWhere((p) => p.pageNumber == result);
+      final targetIndex = _pages.indexWhere((p) => p.pageNumber == result);
       if (targetIndex >= 0 && _pageController.hasClients) {
         _pageController.jumpToPage(targetIndex);
       }
@@ -163,49 +207,52 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final fontFamily =
-        widget.settingsService?.fontFamily ?? 'Amiri Quran';
+    final fontFamily = widget.settingsService?.fontFamily ?? 'Amiri Quran';
     return Scaffold(
-        appBar: AppBar(
-          title: Text(_displaySurah.name),
-
-          centerTitle: true,
-          actions: [
-            IconButton(
-              onPressed: _showJumpToPageDialog,
-              icon: const Icon(Icons.book),
-              tooltip: 'انتقل إلى صفحة',
-            ),
-          ],
-        ),
-        body: SafeChild(
-          builder: (_) => PageView.builder(
+      appBar: AppBar(
+        title: Text(_displaySurah.name),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: _showJumpToPageDialog,
+            icon: const Icon(Icons.book),
+            tooltip: 'انتقل إلى صفحة',
+          ),
+        ],
+      ),
+      body: SafeChild(
+        builder: (_) {
+          final surahNames = {
+            for (final s in widget.quranService.surahs) s.number: s.name,
+          };
+          // حفظ الموضع عند أول بناء
+          WidgetsBinding.instance.addPostFrameCallback((_) => _onPageBuilt());
+          return PageView.builder(
             controller: _pageController,
             itemCount: _pages.length,
             onPageChanged: _onPageChanged,
             itemBuilder: (context, index) {
               final page = _pages[index];
-              // ابدأ بسم الله في أول صفحة لكل سورة ما عدا الفاتحة والتوبة
               final firstChapter = page.verses.first.chapter;
-              // اعرض البسملة فقط إذا كانت الصفحة تبدأ بآية ١ في سورة جديدة
               final showBismillah = page.verses.first.number == 1 &&
-                  firstChapter != 1 && firstChapter != 9;
+                  firstChapter != 1 &&
+                  firstChapter != 9;
               final juz = Juz.of(firstChapter, page.verses.first.number);
               return _MushafPage(
                 page: page,
                 juz: juz,
                 showBismillah: showBismillah,
+                surahName: surahNames[firstChapter],
                 onVerseTap: _showVerseActions,
                 fontFamily: fontFamily,
-                surahNames: {
-                  for (final s in widget.quranService.surahs)
-                    s.number: s.name,
-                },
+                surahNames: surahNames,
+                bookmarkService: widget.bookmarkService,
               );
             },
-          ),
-        ),
-      );
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -218,23 +265,26 @@ class _PageData {
 }
 
 /// صفحة مصحف تملأ الشاشة بالكامل.
-/// يستخدم TextPainter لحساب حجم الخط الأمثل.
 class _MushafPage extends StatelessWidget {
   const _MushafPage({
     required this.page,
     required this.juz,
     required this.showBismillah,
+    this.surahName,
     required this.onVerseTap,
     required this.fontFamily,
     this.surahNames,
+    required this.bookmarkService,
   });
 
   final _PageData page;
   final Juz juz;
   final bool showBismillah;
+  final String? surahName;
   final void Function(Verse) onVerseTap;
   final String fontFamily;
   final Map<int, String>? surahNames;
+  final BookmarkService bookmarkService;
 
   @override
   Widget build(BuildContext context) {
@@ -246,27 +296,20 @@ class _MushafPage extends StatelessWidget {
         final maxW = constraints.maxWidth;
         final maxH = constraints.maxHeight;
         final paddingV = maxH * 0.012;
-        final bismillahH = showBismillah ? maxH * 0.04 : 0.0;
+        final bismillahH = showBismillah ? maxH * 0.07 : 0.0;
         final headerH = maxH * 0.04;
-        // حساب ارتفاع فواصل السور (+ مساحة أمان للعناصرﻹضافية)
         final separatorCount = segments.length > 1 ? segments.length - 1 : 0;
-        final separatorH = separatorCount * (maxH * 0.10); // ~10% per separator (divider + icon + name + bismillah)
-        final textAreaH = (maxH - paddingV * 2 - bismillahH - headerH - separatorH) * 0.85 - 40; // safety margin 15% + 40px buffer for TextPainter vs rendering discrepancy
-        final textAreaW = maxW - 24; // padding horizontal
+        final separatorH = separatorCount * (maxH * 0.10);
+        final textAreaH = (maxH - paddingV * 2 - bismillahH - headerH - separatorH) * 0.85 - 40;
+        final textAreaW = maxW - 24;
 
-        // بناء نص الآيات الكامل مع فواصل السور
+        // بناء نص الآيات لحساب حجم الخط
         final buffer = StringBuffer();
-        int? lastChapter;
         for (final v in page.verses) {
-          if (lastChapter != null && v.chapter != lastChapter) {
-            buffer.write('سورة separator ');
-          }
           buffer.write('${v.text} ﴿${toArabicDigits(v.number)}﴾  ');
-          lastChapter = v.chapter;
         }
         final fullText = buffer.toString();
 
-        // حساب حجم الخط الأمثل باستخدام TextPainter
         final fontSize = _findOptimalFontSize(
           text: fullText,
           fontFamily: fontFamily,
@@ -276,23 +319,34 @@ class _MushafPage extends StatelessWidget {
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          padding: EdgeInsets.symmetric(
-              horizontal: 12, vertical: paddingV),
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: paddingV),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(8),
+            color: theme.brightness == Brightness.dark
+                ? const Color(0xFF252525)
+                : const Color(0xFFFFF8F0),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: theme.dividerColor.withAlpha(30),
+              color: const Color(0xFFD4A843).withAlpha(60),
+              width: 1.5,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(15),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             children: [
-              // رأس الصفحة: الجزء ورقم الصفحة
+              // رأس الصفحة
               SizedBox(
                 height: headerH,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    Icon(Icons.star, size: 10, color: const Color(0xFFD4A843).withAlpha(120)),
+                    const SizedBox(width: 6),
                     Text(
                       '${juz.name} · صفحة ${toArabicDigits(page.pageNumber)}',
                       style: TextStyle(
@@ -302,6 +356,8 @@ class _MushafPage extends StatelessWidget {
                       ),
                       textDirection: TextDirection.rtl,
                     ),
+                    const SizedBox(width: 6),
+                    Icon(Icons.star, size: 10, color: const Color(0xFFD4A843).withAlpha(120)),
                   ],
                 ),
               ),
@@ -310,24 +366,43 @@ class _MushafPage extends StatelessWidget {
                   height: bismillahH,
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text(
-                      'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: fontFamily,
-                        fontSize: 22,
-                        color: theme.colorScheme.primary,
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (surahName != null) ...[
+                          Text(
+                            surahName!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: fontFamily,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                        ],
+                        Text(
+                          'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: fontFamily,
+                            fontSize: 22,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
-              // الآيات
+              // الآيات — كل آية تفاعلية بشكل منفصل
               Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (int s = 0; s < segments.length; s++) ...[
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (int s = 0; s < segments.length; s++) ...[
                         if (s > 0)
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 6),
@@ -336,21 +411,52 @@ class _MushafPage extends StatelessWidget {
                               children: [
                                 Row(
                                   children: [
-                                    const Expanded(child: Divider(thickness: 1)),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                                    Expanded(
+                                      child: Container(
+                                        height: 1.5,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Colors.transparent,
+                                              const Color(0xFFD4A843).withAlpha(150),
+                                              Colors.transparent,
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFD4A843).withAlpha(30),
+                                        shape: BoxShape.circle,
+                                      ),
                                       child: Icon(
-                                        Icons.menu_book,
-                                        size: fontSize * 0.85,
+                                        Icons.auto_stories,
+                                        size: fontSize * 0.7,
                                         color: theme.colorScheme.primary,
                                       ),
                                     ),
-                                    const Expanded(child: Divider(thickness: 1)),
+                                    Expanded(
+                                      child: Container(
+                                        height: 1.5,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Colors.transparent,
+                                              const Color(0xFFD4A843).withAlpha(150),
+                                              Colors.transparent,
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  '${surahNames?[segments[s].chapter] ?? ''}',
+                                  surahNames?[segments[s].chapter] ?? '',
                                   style: TextStyle(
                                     fontFamily: fontFamily,
                                     fontSize: fontSize * 0.85,
@@ -374,36 +480,20 @@ class _MushafPage extends StatelessWidget {
                               ],
                             ),
                           ),
-                        Text.rich(
-                          TextSpan(
-                            children: [
-                              for (final verse in segments[s].verses) ...[
-                                TextSpan(
-                                  text: verse.text,
-                                  style: TextStyle(
-                                    fontFamily: fontFamily,
-                                    fontSize: fontSize,
-                                    height: 1.8,
-                                    color: theme.colorScheme.onSurface,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: ' ﴿${toArabicDigits(verse.number)}﴾ ',
-                                  style: TextStyle(
-                                    fontSize: fontSize * 0.8,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ),
-                              ],
-                            ],
+                        // كل آية في منعطف مستقل لتكون تفاعلية
+                        for (final verse in segments[s].verses)
+                          _VerseWidget(
+                            verse: verse,
+                            fontSize: fontSize,
+                            fontFamily: fontFamily,
+                            onTap: () => onVerseTap(verse),
+                            isBookmarked: bookmarkService.isBookmarked(verse.key),
                           ),
-                          textDirection: TextDirection.rtl,
-                          textAlign: TextAlign.center,
-                        ),
                       ],
                     ],
                   ),
                 ),
+              ),
             ],
           ),
         );
@@ -423,7 +513,6 @@ class _MushafPage extends StatelessWidget {
     return segments;
   }
 
-  /// حساب حجم الخط الأمثل الذي يملأ المساحة المتاحة
   double _findOptimalFontSize({
     required String text,
     required String fontFamily,
@@ -431,7 +520,6 @@ class _MushafPage extends StatelessWidget {
     required double maxHeight,
   }) {
     if (maxWidth <= 0 || maxHeight <= 0) return 18.0;
-    // البحث الثنائي عن أفضل حجم خط
     double low = 12.0;
     double high = 36.0;
     double bestSize = 18.0;
@@ -463,6 +551,73 @@ class _MushafPage extends StatelessWidget {
     }
 
     return bestSize;
+  }
+}
+
+/// آية فردية تفاعلية — يمكن النقر عليها لحفظ العلامة أو النسخ.
+class _VerseWidget extends StatelessWidget {
+  const _VerseWidget({
+    required this.verse,
+    required this.fontSize,
+    required this.fontFamily,
+    required this.onTap,
+    required this.isBookmarked,
+  });
+
+  final Verse verse;
+  final double fontSize;
+  final String fontFamily;
+  final VoidCallback onTap;
+  final bool isBookmarked;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+        child: Text.rich(
+          TextSpan(
+            text: verse.text,
+            style: TextStyle(
+              fontFamily: fontFamily,
+              fontSize: fontSize,
+              height: 2.0,
+              color: theme.colorScheme.onSurface,
+            ),
+            children: [
+              TextSpan(
+                text: ' ﴿${toArabicDigits(verse.number)}﴾',
+                style: TextStyle(
+                  fontSize: fontSize * 0.8,
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (isBookmarked)
+                TextSpan(
+                  text: '  ',
+                  style: TextStyle(fontSize: fontSize * 0.5),
+                  children: [
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: Icon(
+                        Icons.bookmark,
+                        size: fontSize * 0.5,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          textDirection: TextDirection.rtl,
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
   }
 }
 
@@ -530,5 +685,3 @@ class _JumpDialogState extends State<_JumpDialog> {
     );
   }
 }
-
-

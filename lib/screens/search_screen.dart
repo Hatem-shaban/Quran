@@ -6,6 +6,7 @@ import '../models/surah.dart';
 import '../services/bookmark_service.dart';
 import '../services/quran_service.dart';
 import '../utils/arabic_digits.dart';
+import '../utils/page_transitions.dart';
 import '../widgets/error_fallback.dart';
 import 'reader_screen.dart';
 
@@ -48,8 +49,8 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _openVerse(Verse verse) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => ReaderScreen(
+    Navigator.of(context).push(SlideRoute(
+      page: ReaderScreen(
         quranService: widget.quranService,
         bookmarkService: widget.bookmarkService,
         surah: widget.quranService.surahOf(verse.chapter),
@@ -102,30 +103,79 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             Expanded(
               child: !_searched
-                  ? const Center(child: Text('اكتب كلمة للبحث في الآيات'))
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.search, size: 64,
+                              color: Theme.of(context).colorScheme.outline.withAlpha(60)),
+                          const SizedBox(height: 16),
+                          Text('اكتب كلمة للبحث في الآيات',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.outline,
+                              fontSize: 16,
+                            )),
+                        ],
+                      ),
+                    )
                   : _results.isEmpty
-                      ? const Center(child: Text('لا توجد نتائج مطابقة'))
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.search_off, size: 64,
+                                  color: Theme.of(context).colorScheme.outline.withAlpha(60)),
+                              const SizedBox(height: 16),
+                              Text('لا توجد نتائج مطابقة',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.outline,
+                                  fontSize: 16,
+                                )),
+                            ],
+                          ),
+                        )
                       : ListView.builder(
                           itemCount: _results.length,
                           itemBuilder: (context, index) {
                             final verse = _results[index];
                             final surah =
                                 widget.quranService.surahOf(verse.chapter);
-                            return ListTile(
-                              title: Text(
-                                '${surah.name} · الآية ${toArabicDigits(verse.number)}',
-                                style: TextStyle(
-                                  color:
-                                      Theme.of(context).colorScheme.primary,
-                                  fontSize: 13,
+                            return Card(
+                              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              child: ListTile(
+                                leading: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.primaryContainer,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      toArabicDigits(verse.number),
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
                                 ),
+                                title: Text(
+                                  'سورة ${surah.name}',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  verse.text,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                onTap: () => _openVerse(verse),
                               ),
-                              subtitle: Text(
-                                verse.text,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              onTap: () => _openVerse(verse),
                             );
                           },
                         ),

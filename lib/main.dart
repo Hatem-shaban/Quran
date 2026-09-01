@@ -60,13 +60,9 @@ class QuranApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0E5A46),
-        ),
-        fontFamily: 'Amiri Quran',
-      ),
+      theme: _buildLightTheme(),
+      darkTheme: _buildDarkTheme(),
+      themeMode: ThemeMode.system,
       home: HomeShell(
         quranService: quranService,
         bookmarkService: bookmarkService,
@@ -154,4 +150,121 @@ class _HomeShellState extends State<HomeShell> {
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Islamic-inspired theme palette
+// ─────────────────────────────────────────────────────────────
+
+const _gold = Color(0xFFD4A843);
+const _deepGreen = Color(0xFF0E5A46);
+const _cream = Color(0xFFFFF8F0);
+const _darkBg = Color(0xFF1A1A1A);
+
+ThemeData _buildLightTheme() {
+  final colorScheme = ColorScheme.fromSeed(
+    seedColor: _deepGreen,
+    primary: _deepGreen,
+    secondary: _gold,
+    surface: _cream,
+    brightness: Brightness.light,
+  );
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: colorScheme,
+    fontFamily: 'Amiri Quran',
+    scaffoldBackgroundColor: _cream,
+    appBarTheme: AppBarTheme(
+      backgroundColor: _deepGreen,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      centerTitle: true,
+      titleTextStyle: const TextStyle(
+        fontFamily: 'Amiri Quran',
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
+      ),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: colorScheme.surface,
+      indicatorColor: _gold.withAlpha(50),
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return const TextStyle(
+            color: _deepGreen,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          );
+        }
+        return TextStyle(color: colorScheme.outline, fontSize: 12);
+      }),
+    ),
+    cardTheme: CardThemeData(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: _deepGreen.withAlpha(30)),
+      ),
+      color: Colors.white,
+    ),
+    dividerTheme: DividerThemeData(
+      color: _gold.withAlpha(60),
+      thickness: 1,
+    ),
+  );
+}
+
+ThemeData _buildDarkTheme() {
+  final colorScheme = ColorScheme.fromSeed(
+    seedColor: _deepGreen,
+    primary: const Color(0xFF5FBF9E),
+    secondary: _gold,
+    surface: _darkBg,
+    brightness: Brightness.dark,
+  );
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: colorScheme,
+    fontFamily: 'Amiri Quran',
+    scaffoldBackgroundColor: _darkBg,
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF12281F),
+      foregroundColor: Colors.white,
+      elevation: 0,
+      centerTitle: true,
+      titleTextStyle: const TextStyle(
+        fontFamily: 'Amiri Quran',
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
+      ),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: _darkBg,
+      indicatorColor: _gold.withAlpha(40),
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return const TextStyle(
+            color: Color(0xFF5FBF9E),
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          );
+        }
+        return TextStyle(color: colorScheme.outline, fontSize: 12);
+      }),
+    ),
+    cardTheme: CardThemeData(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: const Color(0xFF5FBF9E).withAlpha(30)),
+      ),
+      color: const Color(0xFF252525),
+    ),
+    dividerTheme: DividerThemeData(
+      color: _gold.withAlpha(40),
+      thickness: 1,
+    ),
+  );
 }

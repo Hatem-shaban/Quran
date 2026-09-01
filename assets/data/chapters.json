@@ -1,1 +1,802 @@
-{"chapters": [{"number": 1, "name": "سُوْرَةُ الْفَاتِحَةِ", "transliteration": "Al-Faatiha", "revelation": "مكية", "verseCount": 7}, {"number": 2, "name": "سُوْرَةُ البَقَرَةِ", "transliteration": "Al-Baqara", "revelation": "مدنية", "verseCount": 286}, {"number": 3, "name": "سُوْرَةُ اٰلِ عِمْرٰنَ", "transliteration": "Aal-i-Imraan", "revelation": "مدنية", "verseCount": 200}, {"number": 4, "name": "سُوْرَةُ النِّسَآءِ", "transliteration": "An-Nisaa", "revelation": "مدنية", "verseCount": 176}, {"number": 5, "name": "سُوْرَةُ المَآئِدَةِ", "transliteration": "Al-Maaida", "revelation": "مدنية", "verseCount": 120}, {"number": 6, "name": "سُوْرَةُ الْاَنْعَامِ", "transliteration": "Al-An'aam", "revelation": "مكية", "verseCount": 165}, {"number": 7, "name": "سُوْرَةُ الْاَعْرَافِ", "transliteration": "Al-A'raaf", "revelation": "مكية", "verseCount": 206}, {"number": 8, "name": "سُوْرَةُ الْاَنْفَالِ", "transliteration": "Al-Anfaal", "revelation": "مدنية", "verseCount": 75}, {"number": 9, "name": "سُوْرَةُ التَّوْبَةِ", "transliteration": "At-Tawba", "revelation": "مدنية", "verseCount": 129}, {"number": 10, "name": "سُوْرَةُ يُوْنُسَ", "transliteration": "Yunus", "revelation": "مكية", "verseCount": 109}, {"number": 11, "name": "سُوْرَةُ هُوْدٍ", "transliteration": "Hud", "revelation": "مكية", "verseCount": 123}, {"number": 12, "name": "سُوْرَةُ يُوسُفَ", "transliteration": "Yusuf", "revelation": "مكية", "verseCount": 111}, {"number": 13, "name": "سُوْرَةُ الرَّعْدِ", "transliteration": "Ar-Ra'd", "revelation": "مدنية", "verseCount": 43}, {"number": 14, "name": "سُوْرَةُ اِبْرَاهِيْمَ", "transliteration": "Ibrahim", "revelation": "مكية", "verseCount": 52}, {"number": 15, "name": "سُوْرَةُ الْحِجْرِ", "transliteration": "Al-Hijr", "revelation": "مكية", "verseCount": 99}, {"number": 16, "name": "سُوْرَةُ النَّحْلِ", "transliteration": "An-Nahl", "revelation": "مكية", "verseCount": 128}, {"number": 17, "name": "سُوْرَةُ الإِسۡرَاءِ", "transliteration": "Al-Israa", "revelation": "مكية", "verseCount": 111}, {"number": 18, "name": "سُوْرَةُ الْكَهْفِ", "transliteration": "Al-Kahf", "revelation": "مكية", "verseCount": 110}, {"number": 19, "name": "سُوْرَةُ مَرْيَمَ", "transliteration": "Maryam", "revelation": "مكية", "verseCount": 98}, {"number": 20, "name": "سُوْرَةُ طٰهٰ", "transliteration": "Taa-Haa", "revelation": "مكية", "verseCount": 135}, {"number": 21, "name": "سُوْرَةُ الْاَنْۣبِيَآءِ", "transliteration": "Al-Anbiyaa", "revelation": "مكية", "verseCount": 112}, {"number": 22, "name": "سُوْرَةُ الْحَجِّ", "transliteration": "Al-Hajj", "revelation": "مدنية", "verseCount": 78}, {"number": 23, "name": "سُوْرَةُ الْمُؤْمِنُوْنَ", "transliteration": "Al-Muminoon", "revelation": "مكية", "verseCount": 118}, {"number": 24, "name": "سُوْرَةُ النُّوْرِ", "transliteration": "An-Noor", "revelation": "مدنية", "verseCount": 64}, {"number": 25, "name": "سُوْرَةُ الْفُرْقَانِ", "transliteration": "Al-Furqaan", "revelation": "مكية", "verseCount": 77}, {"number": 26, "name": "سُوْرَةُ الشُّعَرَآءِ", "transliteration": "Ash-Shu'araa", "revelation": "مكية", "verseCount": 227}, {"number": 27, "name": "سُوْرَةُ النَّمْلِ", "transliteration": "An-Naml", "revelation": "مكية", "verseCount": 93}, {"number": 28, "name": "سُوْرَةُ الْقَصَصِ", "transliteration": "Al-Qasas", "revelation": "مكية", "verseCount": 88}, {"number": 29, "name": "سُوْرَةُ الْعَنْكَبُوْتِ", "transliteration": "Al-Ankaboot", "revelation": "مكية", "verseCount": 69}, {"number": 30, "name": "سُوْرَةُ الرُّوْمِ", "transliteration": "Ar-Room", "revelation": "مكية", "verseCount": 60}, {"number": 31, "name": "سُوْرَةُ لُقْمَانَ", "transliteration": "Luqman", "revelation": "مكية", "verseCount": 34}, {"number": 32, "name": "سُوْرَةُ السَّجْدَةِ", "transliteration": "As-Sajda", "revelation": "مكية", "verseCount": 30}, {"number": 33, "name": "سُوْرَةُ الْاَحْزَابِ", "transliteration": "Al-Ahzaab", "revelation": "مدنية", "verseCount": 73}, {"number": 34, "name": "سُوْرَةُ سَبَاٍ", "transliteration": "Saba", "revelation": "مكية", "verseCount": 54}, {"number": 35, "name": "سُوْرَةُ فَاطِرٍ", "transliteration": "Faatir", "revelation": "مكية", "verseCount": 45}, {"number": 36, "name": "سُوْرَةُ يٰسٓ", "transliteration": "Yaseen", "revelation": "مكية", "verseCount": 83}, {"number": 37, "name": "سُوْرَةُ الصَّافَّاتِ", "transliteration": "As-Saaffaat", "revelation": "مكية", "verseCount": 182}, {"number": 38, "name": "سُوْرَةُ صٓ", "transliteration": "Saad", "revelation": "مكية", "verseCount": 88}, {"number": 39, "name": "سُوْرَةُ الزُّمَرِ", "transliteration": "Az-Zumar", "revelation": "مكية", "verseCount": 75}, {"number": 40, "name": "سُوْرَةُ غَافِرٍ", "transliteration": "Ghafir", "revelation": "مكية", "verseCount": 85}, {"number": 41, "name": "سُوْرَةُ فُصِّلَتۡ", "transliteration": "Fussilat", "revelation": "مكية", "verseCount": 54}, {"number": 42, "name": "سُوْرَةُ الشُّوْرٰي", "transliteration": "Ash-Shura", "revelation": "مكية", "verseCount": 53}, {"number": 43, "name": "سُوْرَةُ الزُّخْرُفِ", "transliteration": "Az-Zukhruf", "revelation": "مكية", "verseCount": 89}, {"number": 44, "name": "سُوْرَةُ الدُّخَانِ", "transliteration": "Ad-Dukhaan", "revelation": "مكية", "verseCount": 59}, {"number": 45, "name": "سُوْرَةُ الْجَاثِيَةِ", "transliteration": "Al-Jaathiya", "revelation": "مكية", "verseCount": 37}, {"number": 46, "name": "سُوْرَةُ الْاَحْقَافِ", "transliteration": "Al-Ahqaf", "revelation": "مكية", "verseCount": 35}, {"number": 47, "name": "سُوْرَةُ مُحَمَّدٍ", "transliteration": "Muhammad", "revelation": "مدنية", "verseCount": 38}, {"number": 48, "name": "سُوْرَةُ الْفَتْحِ", "transliteration": "Al-Fath", "revelation": "مدنية", "verseCount": 29}, {"number": 49, "name": "سُوْرَةُ الْحُجُراتِ", "transliteration": "Al-Hujuraat", "revelation": "مدنية", "verseCount": 18}, {"number": 50, "name": "سُوْرَةُ قٓ", "transliteration": "Qaaf", "revelation": "مكية", "verseCount": 45}, {"number": 51, "name": "سُوْرَةُ الذَّارِياتِ", "transliteration": "Adh-Dhaariyat", "revelation": "مكية", "verseCount": 60}, {"number": 52, "name": "سُوْرَةُ الطُّوْرِ", "transliteration": "At-Tur", "revelation": "مكية", "verseCount": 49}, {"number": 53, "name": "سُوْرَةُ النَّجْمِ", "transliteration": "An-Najm", "revelation": "مكية", "verseCount": 62}, {"number": 54, "name": "سُوْرَةُ الْقَمَرِ", "transliteration": "Al-Qamar", "revelation": "مكية", "verseCount": 55}, {"number": 55, "name": "سُوْرَةُ الرَّحْمٰنِ", "transliteration": "Ar-Rahmaan", "revelation": "مدنية", "verseCount": 78}, {"number": 56, "name": "سُوْرَةُ الْوَاقِعَةِ", "transliteration": "Al-Waaqia", "revelation": "مكية", "verseCount": 96}, {"number": 57, "name": "سُوْرَةُ الْحَدِيْدِ", "transliteration": "Al-Hadid", "revelation": "مدنية", "verseCount": 29}, {"number": 58, "name": "سُوْرَةُ الْمُجَادَلَةِ", "transliteration": "Al-Mujaadila", "revelation": "مدنية", "verseCount": 22}, {"number": 59, "name": "سُوْرَةُ الْحَشْرِ", "transliteration": "Al-Hashr", "revelation": "مدنية", "verseCount": 24}, {"number": 60, "name": "سُوْرَةُ الْمُمْتَحِنَةِ", "transliteration": "Al-Mumtahana", "revelation": "مدنية", "verseCount": 13}, {"number": 61, "name": "سُوْرَةُ الصَّفِّ", "transliteration": "As-Saff", "revelation": "مدنية", "verseCount": 14}, {"number": 62, "name": "سُوْرَةُ الْجُمُعَةِ", "transliteration": "Al-Jumu'a", "revelation": "مدنية", "verseCount": 11}, {"number": 63, "name": "سُوْرَةُ الْمُنَافِقُوْنَ", "transliteration": "Al-Munaafiqoon", "revelation": "مدنية", "verseCount": 11}, {"number": 64, "name": "سُوْرَةُ التَّغَابُنِ", "transliteration": "At-Taghaabun", "revelation": "مدنية", "verseCount": 18}, {"number": 65, "name": "سُوْرَةُ الطَّلَاقِ", "transliteration": "At-Talaaq", "revelation": "مدنية", "verseCount": 12}, {"number": 66, "name": "سُوْرَةُ التَّحْرِيْمِ", "transliteration": "At-Tahrim", "revelation": "مدنية", "verseCount": 12}, {"number": 67, "name": "سُوْرَةُ الْمُلْكِ", "transliteration": "Al-Mulk", "revelation": "مكية", "verseCount": 30}, {"number": 68, "name": "سُوْرَةُ الْقَلَمِ", "transliteration": "Al-Qalam", "revelation": "مكية", "verseCount": 52}, {"number": 69, "name": "سُوْرَةُ الْحَآقَّةِ", "transliteration": "Al-Haaqqa", "revelation": "مكية", "verseCount": 52}, {"number": 70, "name": "سُوْرَةُ الْمَعَارِجِ", "transliteration": "Al-Ma'aarij", "revelation": "مكية", "verseCount": 44}, {"number": 71, "name": "سُوْرَةُ نُوْحٍ", "transliteration": "Nooh", "revelation": "مكية", "verseCount": 28}, {"number": 72, "name": "سُوْرَةُ الْجِنِّ", "transliteration": "Al-Jinn", "revelation": "مكية", "verseCount": 28}, {"number": 73, "name": "سُوْرَةُ الْمُزَّمِّلِ", "transliteration": "Al-Muzzammil", "revelation": "مكية", "verseCount": 20}, {"number": 74, "name": "سُوْرَةُ الْمُدَّثِّرِ", "transliteration": "Al-Muddaththir", "revelation": "مكية", "verseCount": 56}, {"number": 75, "name": "سُوْرَةُ الْقِيَامَةِ", "transliteration": "Al-Qiyaama", "revelation": "مكية", "verseCount": 40}, {"number": 76, "name": "سُوْرَةُ الدَّهْرِ", "transliteration": "Al-Insaan", "revelation": "مدنية", "verseCount": 31}, {"number": 77, "name": "سُوْرَةُ الْمُرْسَلَاتِ", "transliteration": "Al-Mursalaat", "revelation": "مكية", "verseCount": 50}, {"number": 78, "name": "سُوْرَةُ النَّبَاِ", "transliteration": "An-Naba", "revelation": "مكية", "verseCount": 40}, {"number": 79, "name": "سُوْرَةُ النَّازِعَاتِ", "transliteration": "An-Naazi'aat", "revelation": "مكية", "verseCount": 46}, {"number": 80, "name": "سُوْرَةُ عَبَسَ", "transliteration": "Abasa", "revelation": "مكية", "verseCount": 42}, {"number": 81, "name": "سُوْرَةُ التَّكْوِيْرِ", "transliteration": "At-Takwir", "revelation": "مكية", "verseCount": 29}, {"number": 82, "name": "سُوْرَةُ الْاِنْفِطَارِ", "transliteration": "Al-Infitaar", "revelation": "مكية", "verseCount": 19}, {"number": 83, "name": "سُوْرَةُ المُطَفِّفِيْنَ", "transliteration": "Al-Mutaffifin", "revelation": "مكية", "verseCount": 36}, {"number": 84, "name": "سُوْرَةُ الاِنْشِقَاقِ", "transliteration": "Al-Inshiqaaq", "revelation": "مكية", "verseCount": 25}, {"number": 85, "name": "سُوْرَةُ الْبُرُوْجِ", "transliteration": "Al-Burooj", "revelation": "مكية", "verseCount": 22}, {"number": 86, "name": "سُوْرَةُ الطَّارِقِ", "transliteration": "At-Taariq", "revelation": "مكية", "verseCount": 17}, {"number": 87, "name": "سُوْرَةُ الْاَعْلٰي", "transliteration": "Al-A'laa", "revelation": "مكية", "verseCount": 19}, {"number": 88, "name": "سُوْرَةُ الْغَاشِيَةِ", "transliteration": "Al-Ghaashiya", "revelation": "مكية", "verseCount": 26}, {"number": 89, "name": "سُوْرَةُ الْفَجْرِ", "transliteration": "Al-Fajr", "revelation": "مكية", "verseCount": 30}, {"number": 90, "name": "سُوْرَةُ الْبَلَدِ", "transliteration": "Al-Balad", "revelation": "مكية", "verseCount": 20}, {"number": 91, "name": "سُوْرَةُ الشَّمْسِ", "transliteration": "Ash-Shams", "revelation": "مكية", "verseCount": 15}, {"number": 92, "name": "سُوْرَةُ الَّيْلِ", "transliteration": "Al-Lail", "revelation": "مكية", "verseCount": 21}, {"number": 93, "name": "سُوْرَةُ الضُّحٰي", "transliteration": "Ad-Dhuhaa", "revelation": "مكية", "verseCount": 11}, {"number": 94, "name": "سُوْرَةُ الشَّرْحِ", "transliteration": "Ash-Sharh", "revelation": "مكية", "verseCount": 8}, {"number": 95, "name": "سُوْرَةُ التِّيْنِ", "transliteration": "At-Tin", "revelation": "مكية", "verseCount": 8}, {"number": 96, "name": "سُوْرَةُ الْعَلَقِ", "transliteration": "Al-Alaq", "revelation": "مكية", "verseCount": 19}, {"number": 97, "name": "سُوْرَةُ الْقَدْرِ", "transliteration": "Al-Qadr", "revelation": "مكية", "verseCount": 5}, {"number": 98, "name": "سُوْرَةُ الْبَيِّنَةِ", "transliteration": "Al-Bayyina", "revelation": "مدنية", "verseCount": 8}, {"number": 99, "name": "سُوْرَةُ الزِّلْزَالِ", "transliteration": "Az-Zalzala", "revelation": "مدنية", "verseCount": 8}, {"number": 100, "name": "سُوْرَةُ العٰدِيٰتِ", "transliteration": "Al-Aadiyaat", "revelation": "مكية", "verseCount": 11}, {"number": 101, "name": "سُوْرَةُ الْقَارِعَةِ", "transliteration": "Al-Qaari'a", "revelation": "مكية", "verseCount": 11}, {"number": 102, "name": "سُوْرَةُ التَّكَاثُرِ", "transliteration": "At-Takaathur", "revelation": "مكية", "verseCount": 8}, {"number": 103, "name": "سُوْرَةُ الْعَصْرِ", "transliteration": "Al-Asr", "revelation": "مكية", "verseCount": 3}, {"number": 104, "name": "سُوْرَةُ الْهُمَزَةِ", "transliteration": "Al-Humaza", "revelation": "مكية", "verseCount": 9}, {"number": 105, "name": "سُوْرَةُ الْفِيْلِ", "transliteration": "Al-Fil", "revelation": "مكية", "verseCount": 5}, {"number": 106, "name": "سُوْرَةُ قُرَيْشٍ", "transliteration": "Quraish", "revelation": "مكية", "verseCount": 4}, {"number": 107, "name": "سُوْرَةُ الْمَاعُوْنِ", "transliteration": "Al-Maa'un", "revelation": "مكية", "verseCount": 7}, {"number": 108, "name": "سُوْرَةُ الْكَوْثَرِ", "transliteration": "Al-Kawthar", "revelation": "مكية", "verseCount": 3}, {"number": 109, "name": "سُوْرَةُ الْكَافِرُوْنَ", "transliteration": "Al-Kaafiroon", "revelation": "مكية", "verseCount": 6}, {"number": 110, "name": "سُوْرَةُ النَّصْرِ", "transliteration": "An-Nasr", "revelation": "مدنية", "verseCount": 3}, {"number": 111, "name": "سُوْرَةُ المَسَدِ", "transliteration": "Al-Masad", "revelation": "مكية", "verseCount": 5}, {"number": 112, "name": "سُوْرَةُ الْاِخْلَاصِ", "transliteration": "Al-Ikhlaas", "revelation": "مكية", "verseCount": 4}, {"number": 113, "name": "سُوْرَةُ الْفَلَقِ", "transliteration": "Al-Falaq", "revelation": "مكية", "verseCount": 5}, {"number": 114, "name": "سُوْرَةُ النَّاسِ", "transliteration": "An-Naas", "revelation": "مكية", "verseCount": 6}]}
+{
+  "chapters": [
+    {
+      "number": 1,
+      "name": "سُوْرَةُ الْفَاتِحَةِ",
+      "transliteration": "Al-Faatiha",
+      "revelation": "مكية",
+      "verseCount": 7
+    },
+    {
+      "number": 2,
+      "name": "سُوْرَةُ البَقَرَةِ",
+      "transliteration": "Al-Baqara",
+      "revelation": "مدنية",
+      "verseCount": 286
+    },
+    {
+      "number": 3,
+      "name": "سُوْرَةُ آلِ عِمْرَانَ",
+      "transliteration": "Aal-i-Imraan",
+      "revelation": "مدنية",
+      "verseCount": 200
+    },
+    {
+      "number": 4,
+      "name": "سُوْرَةُ النِّسَآءِ",
+      "transliteration": "An-Nisaa",
+      "revelation": "مدنية",
+      "verseCount": 176
+    },
+    {
+      "number": 5,
+      "name": "سُوْرَةُ المَآئِدَةِ",
+      "transliteration": "Al-Maaida",
+      "revelation": "مدنية",
+      "verseCount": 120
+    },
+    {
+      "number": 6,
+      "name": "سُوْرَةُ الْأَنْعَامِ",
+      "transliteration": "Al-An'aam",
+      "revelation": "مكية",
+      "verseCount": 165
+    },
+    {
+      "number": 7,
+      "name": "سُوْرَةُ الْأَعْرَافِ",
+      "transliteration": "Al-A'raaf",
+      "revelation": "مكية",
+      "verseCount": 206
+    },
+    {
+      "number": 8,
+      "name": "سُوْرَةُ الْأَنْفَالِ",
+      "transliteration": "Al-Anfaal",
+      "revelation": "مدنية",
+      "verseCount": 75
+    },
+    {
+      "number": 9,
+      "name": "سُوْرَةُ التَّوْبَةِ",
+      "transliteration": "At-Tawba",
+      "revelation": "مدنية",
+      "verseCount": 129
+    },
+    {
+      "number": 10,
+      "name": "سُوْرَةُ يُوْنُسَ",
+      "transliteration": "Yunus",
+      "revelation": "مكية",
+      "verseCount": 109
+    },
+    {
+      "number": 11,
+      "name": "سُوْرَةُ هُوْدٍ",
+      "transliteration": "Hud",
+      "revelation": "مكية",
+      "verseCount": 123
+    },
+    {
+      "number": 12,
+      "name": "سُوْرَةُ يُوسُفَ",
+      "transliteration": "Yusuf",
+      "revelation": "مكية",
+      "verseCount": 111
+    },
+    {
+      "number": 13,
+      "name": "سُوْرَةُ الرَّعْدِ",
+      "transliteration": "Ar-Ra'd",
+      "revelation": "مدنية",
+      "verseCount": 43
+    },
+    {
+      "number": 14,
+      "name": "سُوْرَةُ اِبْرَاهِيْمَ",
+      "transliteration": "Ibrahim",
+      "revelation": "مكية",
+      "verseCount": 52
+    },
+    {
+      "number": 15,
+      "name": "سُوْرَةُ الْحِجْرِ",
+      "transliteration": "Al-Hijr",
+      "revelation": "مكية",
+      "verseCount": 99
+    },
+    {
+      "number": 16,
+      "name": "سُوْرَةُ النَّحْلِ",
+      "transliteration": "An-Nahl",
+      "revelation": "مكية",
+      "verseCount": 128
+    },
+    {
+      "number": 17,
+      "name": "سُوْرَةُ الإِسۡرَاءِ",
+      "transliteration": "Al-Israa",
+      "revelation": "مكية",
+      "verseCount": 111
+    },
+    {
+      "number": 18,
+      "name": "سُوْرَةُ الْكَهْفِ",
+      "transliteration": "Al-Kahf",
+      "revelation": "مكية",
+      "verseCount": 110
+    },
+    {
+      "number": 19,
+      "name": "سُوْرَةُ مَرْيَمَ",
+      "transliteration": "Maryam",
+      "revelation": "مكية",
+      "verseCount": 98
+    },
+    {
+      "number": 20,
+      "name": "سُوْرَةُ طٰهٰ",
+      "transliteration": "Taa-Haa",
+      "revelation": "مكية",
+      "verseCount": 135
+    },
+    {
+      "number": 21,
+      "name": "سُوْرَةُ الْأَنْبِيَاءِ",
+      "transliteration": "Al-Anbiyaa",
+      "revelation": "مكية",
+      "verseCount": 112
+    },
+    {
+      "number": 22,
+      "name": "سُوْرَةُ الْحَجِّ",
+      "transliteration": "Al-Hajj",
+      "revelation": "مدنية",
+      "verseCount": 78
+    },
+    {
+      "number": 23,
+      "name": "سُوْرَةُ الْمُؤْمِنُوْنَ",
+      "transliteration": "Al-Muminoon",
+      "revelation": "مكية",
+      "verseCount": 118
+    },
+    {
+      "number": 24,
+      "name": "سُوْرَةُ النُّوْرِ",
+      "transliteration": "An-Noor",
+      "revelation": "مدنية",
+      "verseCount": 64
+    },
+    {
+      "number": 25,
+      "name": "سُوْرَةُ الْفُرْقَانِ",
+      "transliteration": "Al-Furqaan",
+      "revelation": "مكية",
+      "verseCount": 77
+    },
+    {
+      "number": 26,
+      "name": "سُوْرَةُ الشُّعَرَآءِ",
+      "transliteration": "Ash-Shu'araa",
+      "revelation": "مكية",
+      "verseCount": 227
+    },
+    {
+      "number": 27,
+      "name": "سُوْرَةُ النَّمْلِ",
+      "transliteration": "An-Naml",
+      "revelation": "مكية",
+      "verseCount": 93
+    },
+    {
+      "number": 28,
+      "name": "سُوْرَةُ الْقَصَصِ",
+      "transliteration": "Al-Qasas",
+      "revelation": "مكية",
+      "verseCount": 88
+    },
+    {
+      "number": 29,
+      "name": "سُوْرَةُ الْعَنْكَبُوْتِ",
+      "transliteration": "Al-Ankaboot",
+      "revelation": "مكية",
+      "verseCount": 69
+    },
+    {
+      "number": 30,
+      "name": "سُوْرَةُ الرُّوْمِ",
+      "transliteration": "Ar-Room",
+      "revelation": "مكية",
+      "verseCount": 60
+    },
+    {
+      "number": 31,
+      "name": "سُوْرَةُ لُقْمَانَ",
+      "transliteration": "Luqman",
+      "revelation": "مكية",
+      "verseCount": 34
+    },
+    {
+      "number": 32,
+      "name": "سُوْرَةُ السَّجْدَةِ",
+      "transliteration": "As-Sajda",
+      "revelation": "مكية",
+      "verseCount": 30
+    },
+    {
+      "number": 33,
+      "name": "سُوْرَةُ الْأَحْزَابِ",
+      "transliteration": "Al-Ahzaab",
+      "revelation": "مدنية",
+      "verseCount": 73
+    },
+    {
+      "number": 34,
+      "name": "سُوْرَةُ سَبَأ",
+      "transliteration": "Saba",
+      "revelation": "مكية",
+      "verseCount": 54
+    },
+    {
+      "number": 35,
+      "name": "سُوْرَةُ فَاطِرٍ",
+      "transliteration": "Faatir",
+      "revelation": "مكية",
+      "verseCount": 45
+    },
+    {
+      "number": 36,
+      "name": "سُوْرَةُ يٰسٓ",
+      "transliteration": "Yaseen",
+      "revelation": "مكية",
+      "verseCount": 83
+    },
+    {
+      "number": 37,
+      "name": "سُوْرَةُ الصَّافَّاتِ",
+      "transliteration": "As-Saaffaat",
+      "revelation": "مكية",
+      "verseCount": 182
+    },
+    {
+      "number": 38,
+      "name": "سُوْرَةُ صٓ",
+      "transliteration": "Saad",
+      "revelation": "مكية",
+      "verseCount": 88
+    },
+    {
+      "number": 39,
+      "name": "سُوْرَةُ الزُّمَرِ",
+      "transliteration": "Az-Zumar",
+      "revelation": "مكية",
+      "verseCount": 75
+    },
+    {
+      "number": 40,
+      "name": "سُوْرَةُ غَافِرٍ",
+      "transliteration": "Ghafir",
+      "revelation": "مكية",
+      "verseCount": 85
+    },
+    {
+      "number": 41,
+      "name": "سُوْرَةُ فُصِّلَتۡ",
+      "transliteration": "Fussilat",
+      "revelation": "مكية",
+      "verseCount": 54
+    },
+    {
+      "number": 42,
+      "name": "سُوْرَةُ الشُّورَى",
+      "transliteration": "Ash-Shura",
+      "revelation": "مكية",
+      "verseCount": 53
+    },
+    {
+      "number": 43,
+      "name": "سُوْرَةُ الزُّخْرُفِ",
+      "transliteration": "Az-Zukhruf",
+      "revelation": "مكية",
+      "verseCount": 89
+    },
+    {
+      "number": 44,
+      "name": "سُوْرَةُ الدُّخَانِ",
+      "transliteration": "Ad-Dukhaan",
+      "revelation": "مكية",
+      "verseCount": 59
+    },
+    {
+      "number": 45,
+      "name": "سُوْرَةُ الْجَاثِيَةِ",
+      "transliteration": "Al-Jaathiya",
+      "revelation": "مكية",
+      "verseCount": 37
+    },
+    {
+      "number": 46,
+      "name": "سُوْرَةُ الْأَحْقَافِ",
+      "transliteration": "Al-Ahqaf",
+      "revelation": "مكية",
+      "verseCount": 35
+    },
+    {
+      "number": 47,
+      "name": "سُوْرَةُ مُحَمَّدٍ",
+      "transliteration": "Muhammad",
+      "revelation": "مدنية",
+      "verseCount": 38
+    },
+    {
+      "number": 48,
+      "name": "سُوْرَةُ الْفَتْحِ",
+      "transliteration": "Al-Fath",
+      "revelation": "مدنية",
+      "verseCount": 29
+    },
+    {
+      "number": 49,
+      "name": "سُوْرَةُ الْحُجُراتِ",
+      "transliteration": "Al-Hujuraat",
+      "revelation": "مدنية",
+      "verseCount": 18
+    },
+    {
+      "number": 50,
+      "name": "سُوْرَةُ قٓ",
+      "transliteration": "Qaaf",
+      "revelation": "مكية",
+      "verseCount": 45
+    },
+    {
+      "number": 51,
+      "name": "سُوْرَةُ الذَّارِياتِ",
+      "transliteration": "Adh-Dhaariyat",
+      "revelation": "مكية",
+      "verseCount": 60
+    },
+    {
+      "number": 52,
+      "name": "سُوْرَةُ الطُّوْرِ",
+      "transliteration": "At-Tur",
+      "revelation": "مكية",
+      "verseCount": 49
+    },
+    {
+      "number": 53,
+      "name": "سُوْرَةُ النَّجْمِ",
+      "transliteration": "An-Najm",
+      "revelation": "مكية",
+      "verseCount": 62
+    },
+    {
+      "number": 54,
+      "name": "سُوْرَةُ الْقَمَرِ",
+      "transliteration": "Al-Qamar",
+      "revelation": "مكية",
+      "verseCount": 55
+    },
+    {
+      "number": 55,
+      "name": "سُوْرَةُ الرَّحْمٰنِ",
+      "transliteration": "Ar-Rahmaan",
+      "revelation": "مدنية",
+      "verseCount": 78
+    },
+    {
+      "number": 56,
+      "name": "سُوْرَةُ الْوَاقِعَةِ",
+      "transliteration": "Al-Waaqia",
+      "revelation": "مكية",
+      "verseCount": 96
+    },
+    {
+      "number": 57,
+      "name": "سُوْرَةُ الْحَدِيْدِ",
+      "transliteration": "Al-Hadid",
+      "revelation": "مدنية",
+      "verseCount": 29
+    },
+    {
+      "number": 58,
+      "name": "سُوْرَةُ الْمُجَادَلَةِ",
+      "transliteration": "Al-Mujaadila",
+      "revelation": "مدنية",
+      "verseCount": 22
+    },
+    {
+      "number": 59,
+      "name": "سُوْرَةُ الْحَشْرِ",
+      "transliteration": "Al-Hashr",
+      "revelation": "مدنية",
+      "verseCount": 24
+    },
+    {
+      "number": 60,
+      "name": "سُوْرَةُ الْمُمْتَحِنَةِ",
+      "transliteration": "Al-Mumtahana",
+      "revelation": "مدنية",
+      "verseCount": 13
+    },
+    {
+      "number": 61,
+      "name": "سُوْرَةُ الصَّفِّ",
+      "transliteration": "As-Saff",
+      "revelation": "مدنية",
+      "verseCount": 14
+    },
+    {
+      "number": 62,
+      "name": "سُوْرَةُ الْجُمُعَةِ",
+      "transliteration": "Al-Jumu'a",
+      "revelation": "مدنية",
+      "verseCount": 11
+    },
+    {
+      "number": 63,
+      "name": "سُوْرَةُ الْمُنَافِقُوْنَ",
+      "transliteration": "Al-Munaafiqoon",
+      "revelation": "مدنية",
+      "verseCount": 11
+    },
+    {
+      "number": 64,
+      "name": "سُوْرَةُ التَّغَابُنِ",
+      "transliteration": "At-Taghaabun",
+      "revelation": "مدنية",
+      "verseCount": 18
+    },
+    {
+      "number": 65,
+      "name": "سُوْرَةُ الطَّلَاقِ",
+      "transliteration": "At-Talaaq",
+      "revelation": "مدنية",
+      "verseCount": 12
+    },
+    {
+      "number": 66,
+      "name": "سُوْرَةُ التَّحْرِيْمِ",
+      "transliteration": "At-Tahrim",
+      "revelation": "مدنية",
+      "verseCount": 12
+    },
+    {
+      "number": 67,
+      "name": "سُوْرَةُ الْمُلْكِ",
+      "transliteration": "Al-Mulk",
+      "revelation": "مكية",
+      "verseCount": 30
+    },
+    {
+      "number": 68,
+      "name": "سُوْرَةُ الْقَلَمِ",
+      "transliteration": "Al-Qalam",
+      "revelation": "مكية",
+      "verseCount": 52
+    },
+    {
+      "number": 69,
+      "name": "سُوْرَةُ الْحَآقَّةِ",
+      "transliteration": "Al-Haaqqa",
+      "revelation": "مكية",
+      "verseCount": 52
+    },
+    {
+      "number": 70,
+      "name": "سُوْرَةُ الْمَعَارِجِ",
+      "transliteration": "Al-Ma'aarij",
+      "revelation": "مكية",
+      "verseCount": 44
+    },
+    {
+      "number": 71,
+      "name": "سُوْرَةُ نُوْحٍ",
+      "transliteration": "Nooh",
+      "revelation": "مكية",
+      "verseCount": 28
+    },
+    {
+      "number": 72,
+      "name": "سُوْرَةُ الْجِنِّ",
+      "transliteration": "Al-Jinn",
+      "revelation": "مكية",
+      "verseCount": 28
+    },
+    {
+      "number": 73,
+      "name": "سُوْرَةُ الْمُزَّمِّلِ",
+      "transliteration": "Al-Muzzammil",
+      "revelation": "مكية",
+      "verseCount": 20
+    },
+    {
+      "number": 74,
+      "name": "سُوْرَةُ الْمُدَّثِّرِ",
+      "transliteration": "Al-Muddaththir",
+      "revelation": "مكية",
+      "verseCount": 56
+    },
+    {
+      "number": 75,
+      "name": "سُوْرَةُ الْقِيَامَةِ",
+      "transliteration": "Al-Qiyaama",
+      "revelation": "مكية",
+      "verseCount": 40
+    },
+    {
+      "number": 76,
+      "name": "سُوْرَةُ الْإِنْسَانِ",
+      "transliteration": "Al-Insaan",
+      "revelation": "مدنية",
+      "verseCount": 31
+    },
+    {
+      "number": 77,
+      "name": "سُوْرَةُ الْمُرْسَلَاتِ",
+      "transliteration": "Al-Mursalaat",
+      "revelation": "مكية",
+      "verseCount": 50
+    },
+    {
+      "number": 78,
+      "name": "سُوْرَةُ النَّبَأ",
+      "transliteration": "An-Naba",
+      "revelation": "مكية",
+      "verseCount": 40
+    },
+    {
+      "number": 79,
+      "name": "سُوْرَةُ النَّازِعَاتِ",
+      "transliteration": "An-Naazi'aat",
+      "revelation": "مكية",
+      "verseCount": 46
+    },
+    {
+      "number": 80,
+      "name": "سُوْرَةُ عَبَسَ",
+      "transliteration": "Abasa",
+      "revelation": "مكية",
+      "verseCount": 42
+    },
+    {
+      "number": 81,
+      "name": "سُوْرَةُ التَّكْوِيْرِ",
+      "transliteration": "At-Takwir",
+      "revelation": "مكية",
+      "verseCount": 29
+    },
+    {
+      "number": 82,
+      "name": "سُوْرَةُ الْإِنْفِطَارِ",
+      "transliteration": "Al-Infitaar",
+      "revelation": "مكية",
+      "verseCount": 19
+    },
+    {
+      "number": 83,
+      "name": "سُوْرَةُ المُطَفِّفِيْنَ",
+      "transliteration": "Al-Mutaffifin",
+      "revelation": "مكية",
+      "verseCount": 36
+    },
+    {
+      "number": 84,
+      "name": "سُوْرَةُ الْإِنْشِقَاقِ",
+      "transliteration": "Al-Inshiqaaq",
+      "revelation": "مكية",
+      "verseCount": 25
+    },
+    {
+      "number": 85,
+      "name": "سُوْرَةُ الْبُرُوْجِ",
+      "transliteration": "Al-Burooj",
+      "revelation": "مكية",
+      "verseCount": 22
+    },
+    {
+      "number": 86,
+      "name": "سُوْرَةُ الطَّارِقِ",
+      "transliteration": "At-Taariq",
+      "revelation": "مكية",
+      "verseCount": 17
+    },
+    {
+      "number": 87,
+      "name": "سُوْرَةُ الْأَعْلَى",
+      "transliteration": "Al-A'laa",
+      "revelation": "مكية",
+      "verseCount": 19
+    },
+    {
+      "number": 88,
+      "name": "سُوْرَةُ الْغَاشِيَةِ",
+      "transliteration": "Al-Ghaashiya",
+      "revelation": "مكية",
+      "verseCount": 26
+    },
+    {
+      "number": 89,
+      "name": "سُوْرَةُ الْفَجْرِ",
+      "transliteration": "Al-Fajr",
+      "revelation": "مكية",
+      "verseCount": 30
+    },
+    {
+      "number": 90,
+      "name": "سُوْرَةُ الْبَلَدِ",
+      "transliteration": "Al-Balad",
+      "revelation": "مكية",
+      "verseCount": 20
+    },
+    {
+      "number": 91,
+      "name": "سُوْرَةُ الشَّمْسِ",
+      "transliteration": "Ash-Shams",
+      "revelation": "مكية",
+      "verseCount": 15
+    },
+    {
+      "number": 92,
+      "name": "سُوْرَةُ اللَّيْلِ",
+      "transliteration": "Al-Lail",
+      "revelation": "مكية",
+      "verseCount": 21
+    },
+    {
+      "number": 93,
+      "name": "سُوْرَةُ الضُّحَى",
+      "transliteration": "Ad-Dhuhaa",
+      "revelation": "مكية",
+      "verseCount": 11
+    },
+    {
+      "number": 94,
+      "name": "سُوْرَةُ الشَّرْحِ",
+      "transliteration": "Ash-Sharh",
+      "revelation": "مكية",
+      "verseCount": 8
+    },
+    {
+      "number": 95,
+      "name": "سُوْرَةُ التِّيْنِ",
+      "transliteration": "At-Tin",
+      "revelation": "مكية",
+      "verseCount": 8
+    },
+    {
+      "number": 96,
+      "name": "سُوْرَةُ الْعَلَقِ",
+      "transliteration": "Al-Alaq",
+      "revelation": "مكية",
+      "verseCount": 19
+    },
+    {
+      "number": 97,
+      "name": "سُوْرَةُ الْقَدْرِ",
+      "transliteration": "Al-Qadr",
+      "revelation": "مكية",
+      "verseCount": 5
+    },
+    {
+      "number": 98,
+      "name": "سُوْرَةُ الْبَيِّنَةِ",
+      "transliteration": "Al-Bayyina",
+      "revelation": "مدنية",
+      "verseCount": 8
+    },
+    {
+      "number": 99,
+      "name": "سُوْرَةُ الزَّلْزَلَةِ",
+      "transliteration": "Az-Zalzala",
+      "revelation": "مدنية",
+      "verseCount": 8
+    },
+    {
+      "number": 100,
+      "name": "سُوْرَةُ الْعَادِيَاتِ",
+      "transliteration": "Al-Aadiyaat",
+      "revelation": "مكية",
+      "verseCount": 11
+    },
+    {
+      "number": 101,
+      "name": "سُوْرَةُ الْقَارِعَةِ",
+      "transliteration": "Al-Qaari'a",
+      "revelation": "مكية",
+      "verseCount": 11
+    },
+    {
+      "number": 102,
+      "name": "سُوْرَةُ التَّكَاثُرِ",
+      "transliteration": "At-Takaathur",
+      "revelation": "مكية",
+      "verseCount": 8
+    },
+    {
+      "number": 103,
+      "name": "سُوْرَةُ الْعَصْرِ",
+      "transliteration": "Al-Asr",
+      "revelation": "مكية",
+      "verseCount": 3
+    },
+    {
+      "number": 104,
+      "name": "سُوْرَةُ الْهُمَزَةِ",
+      "transliteration": "Al-Humaza",
+      "revelation": "مكية",
+      "verseCount": 9
+    },
+    {
+      "number": 105,
+      "name": "سُوْرَةُ الْفِيْلِ",
+      "transliteration": "Al-Fil",
+      "revelation": "مكية",
+      "verseCount": 5
+    },
+    {
+      "number": 106,
+      "name": "سُوْرَةُ قُرَيْشٍ",
+      "transliteration": "Quraish",
+      "revelation": "مكية",
+      "verseCount": 4
+    },
+    {
+      "number": 107,
+      "name": "سُوْرَةُ الْمَاعُوْنِ",
+      "transliteration": "Al-Maa'un",
+      "revelation": "مكية",
+      "verseCount": 7
+    },
+    {
+      "number": 108,
+      "name": "سُوْرَةُ الْكَوْثَرِ",
+      "transliteration": "Al-Kawthar",
+      "revelation": "مكية",
+      "verseCount": 3
+    },
+    {
+      "number": 109,
+      "name": "سُوْرَةُ الْكَافِرُوْنَ",
+      "transliteration": "Al-Kaafiroon",
+      "revelation": "مكية",
+      "verseCount": 6
+    },
+    {
+      "number": 110,
+      "name": "سُوْرَةُ النَّصْرِ",
+      "transliteration": "An-Nasr",
+      "revelation": "مدنية",
+      "verseCount": 3
+    },
+    {
+      "number": 111,
+      "name": "سُوْرَةُ المَسَدِ",
+      "transliteration": "Al-Masad",
+      "revelation": "مكية",
+      "verseCount": 5
+    },
+    {
+      "number": 112,
+      "name": "سُوْرَةُ الْإِخْلَاصِ",
+      "transliteration": "Al-Ikhlaas",
+      "revelation": "مكية",
+      "verseCount": 4
+    },
+    {
+      "number": 113,
+      "name": "سُوْرَةُ الْفَلَقِ",
+      "transliteration": "Al-Falaq",
+      "revelation": "مكية",
+      "verseCount": 5
+    },
+    {
+      "number": 114,
+      "name": "سُوْرَةُ النَّاسِ",
+      "transliteration": "An-Naas",
+      "revelation": "مكية",
+      "verseCount": 6
+    }
+  ]
+}

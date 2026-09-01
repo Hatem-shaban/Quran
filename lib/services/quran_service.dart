@@ -80,18 +80,49 @@ class QuranService {
     ];
   }
 
-  /// إزالة التشكيل والتطويل لتسهيل البحث العربي.
+  /// إزالة التشكيل وتوحيد أشكال الحروف لتسهيل البحث العربي.
   static String normalize(String input) {
     final buffer = StringBuffer();
     for (final code in input.runes) {
+      // ── حذف التشكيل ──
       final isDiacritic =
-          (code >= 0x0610 && code <= 0x061A) || // علامات قرآنية صغيرة
-          (code >= 0x064B && code <= 0x065F) || // تشكيل أساسي
-          code == 0x0670 || // ألف خنجرية
-          code == 0x0640 || // تطويل
-          (code >= 0x06D6 && code <= 0x06ED) || // علامات وقف وتشكيل قرآني
-          (code >= 0x08D3 && code <= 0x08FF); // توسعات قرآنية
-      if (!isDiacritic) buffer.writeCharCode(code);
+          (code >= 0x0610 && code <= 0x061A) ||
+          (code >= 0x064B && code <= 0x065F) ||
+          code == 0x0670 ||
+          code == 0x0640 ||
+          (code >= 0x06D6 && code <= 0x06ED) ||
+          (code >= 0x08D3 && code <= 0x08FF);
+      if (isDiacritic) continue;
+
+      // ── توحيد أشكال الألف ──
+      if (code == 0x0622 || // أ  ألف ممدودة
+          code == 0x0623 || // أ  ألف فوق همزة
+          code == 0x0625 || // إ  ألف تحت همزة
+          code == 0x0671)   // ٱ  ألف وصل
+      {
+        buffer.writeCharCode(0x0627); // ا  ألف عادية
+        continue;
+      }
+
+      // ── همزة单独 ← ألف ──
+      if (code == 0x0621) {
+        buffer.writeCharCode(0x0627); // ا
+        continue;
+      }
+
+      // ── تاء مربوطة ← هاء ──
+      if (code == 0x0629) {
+        buffer.writeCharCode(0x0647); // ه
+        continue;
+      }
+
+      // ── ألف مقصورة ← ياء ──
+      if (code == 0x0649) {
+        buffer.writeCharCode(0x064A); // ي
+        continue;
+      }
+
+      buffer.writeCharCode(code);
     }
     return buffer.toString();
   }
