@@ -257,8 +257,7 @@ class _PageData {
   const _PageData({required this.verses, required this.pageNumber});
 }
 
-/// صفحة مصحف — النص ينساب كفقرات مركوزة (طراز المصحف الحقيقي).
-/// لا تمرير عمودي: كل المحتوى يملأ الصفحة بالكامل.
+/// صفحة مصحف — كل المحتوى في Text.rich واحد لضمان دقة قياس الخط.
 class _MushafPage extends StatefulWidget {
   const _MushafPage({
     required this.page,
@@ -305,38 +304,31 @@ class _MushafPageState extends State<_MushafPage> {
         final maxH = constraints.maxHeight;
         final maxW = constraints.maxWidth;
 
-        // ── حساب المساحات الثابتة ──
         const paddingV = 10.0;
         const headerH = 30.0;
         final bismillahH = widget.showBismillah ? 56.0 : 0.0;
-        final separatorCount = segments.length > 1 ? segments.length - 1 : 0;
-        // كل فاصل: خط + اسم سورة + بسملة
-        final separatorH = separatorCount * 68.0;
 
-        final verseAreaH =
-            maxH - (paddingV * 2) - headerH - bismillahH - separatorH - 16;
+        // المساحة المتاحة للنص الكامل (مع الفواصل النصية)
+        final textAreaH = maxH - (paddingV * 2) - headerH - bismillahH - 12;
         final textAreaW = maxW - 32;
-
-        // ── حساب حجم الخط ──
-        final buffer = StringBuffer();
-        for (final v in widget.page.verses) {
-          buffer.write('${v.text} ﴿${toArabicDigits(v.number)}﴾  ');
-        }
-        final fullText = buffer.toString();
-
-        final fontSize = _findOptimalFontSize(
-          text: fullText,
-          fontFamily: widget.fontFamily,
-          maxWidth: textAreaW,
-          maxHeight: verseAreaH,
-        );
-        final lineHeight = fontSize < 20 ? 1.6 : fontSize < 26 ? 1.7 : 1.8;
 
         // ── تنظيف recognizer القديمة ──
         for (final r in _recognizers) {
           r.dispose();
         }
         _recognizers.clear();
+
+        // ── بناء كل النص كـ TextSpan واحد ──
+        final allSpans = _buildAllSpans(segments, theme);
+
+        // ── حساب الخط الأمثل ──
+        final fontSize = _findOptimalFontSize(
+          spans: allSpans,
+          fontFamily: widget.fontFamily,
+          maxWidth: textAreaW,
+          maxHeight: textAreaH,
+        );
+        final lineHeight = fontSize < 20 ? 1.6 : fontSize < 26 ? 1.7 : 1.8;
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -425,56 +417,20 @@ class _MushafPageState extends State<_MushafPage> {
                 ),
               ],
 
-              // ── محتوى الآيات — فواصل + نصوص منسابة بدون قيود Expanded ──
+              // ── النص الكامل — فقرة واحدة مركوزة ──
               Expanded(
-                child: LayoutBuilder(
-                  builder: (context, innerConstraints) {
-                    // حساب ارتفاع المحتوى الفعلي
-                    final contentHeight = _estimateContentHeight(
-                      segments: segments,
-                      fontSize: fontSize,
-                      lineHeight: lineHeight,
+                child: Text.rich(
+                  TextSpan(
+                    children: _applyFontSize(allSpans, fontSize),
+                    style: TextStyle(
                       fontFamily: widget.fontFamily,
-                      textAreaW: textAreaW,
-                    );
-                    final fitsNaturally = contentHeight <= verseAreaH + 10;
-
-                    final content = Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        for (int s = 0; s < segments.length; s++) ...[
-                          if (s > 0)
-                            _SurahSeparator(
-                              surahName: widget.surahNames?[segments[s].chapter] ?? '',
-                              showBismillah: segments[s].chapter != 1 && segments[s].chapter != 9,
-                              fontFamily: widget.fontFamily,
-                              fontSize: fontSize,
-                              theme: theme,
-                            ),
-                          _SegmentText(
-                            verses: segments[s].verses,
-                            fontSize: fontSize,
-                            lineHeight: lineHeight,
-                            fontFamily: widget.fontFamily,
-                            theme: theme,
-                            bookmarkService: widget.bookmarkService,
-                            onVerseTap: widget.onVerseTap,
-                            recognizers: _recognizers,
-                          ),
-                        ],
-                      ],
-                    );
-
-                    // إذا النص يتناسب مع المساحة — لا نسمح بالتمرير
-                    if (fitsNaturally) {
-                      return Center(child: content);
-                    }
-                    // وإلا — نسمح بتمرير كشبكة أمان
-                    return SingleChildScrollView(
-                      physics: const NeverScrollableScrollPhysics(),
-                      child: content,
-                    );
-                  },
+                      fontSize: fontSize,
+                      height: lineHeight,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  textDirection: TextDirection.rtl,
+                  textAlign: TextAlign.center,
                 ),
               ),
             ],
@@ -482,6 +438,84 @@ class _MushafPageState extends State<_MushafPage> {
         );
       },
     );
+  }
+
+  /// بناء جميع spans للصفحة: فواصل السور + آيات مع tap recognizers.
+  List<InlineSpan> _buildAllSpans(List<_VerseSegment> segments, ThemeData theme) {
+    final spans = <InlineSpan>[];
+
+    for (int s = 0; s < segments.length; s++) {
+      // ── فاصل بين السور ──
+      if (s > 0) {
+        final ch = segments[s].chapter;
+        final name = widget.surahNames?[ch] ?? '';
+        final hasBismillah = ch != 1 && ch != 9;
+
+        spans.add(TextSpan(text: '\n\n'));
+        spans.add(TextSpan(
+          text: '$name\n',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ));
+        if (hasBismillah) {
+          spans.add(TextSpan(
+            text: 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ\n',
+          ));
+        }
+      }
+
+      // ── آيات السورة ──
+      for (final verse in segments[s].verses) {
+        final recognizer = TapGestureRecognizer()
+          ..onTap = () => widget.onVerseTap(verse);
+        _recognizers.add(recognizer);
+
+        // نص الآية
+        spans.add(TextSpan(
+          text: verse.text,
+          recognizer: recognizer,
+        ));
+
+        // رقم الآية
+        final isBookmarked = widget.bookmarkService.isBookmarked(verse.key);
+        spans.add(TextSpan(
+          text: ' ﴿${toArabicDigits(verse.number)}﴾ ',
+          recognizer: recognizer,
+        ));
+
+        // رمز العلامة (نص بدلاً من WidgetSpan لدقة القياس)
+        if (isBookmarked) {
+          spans.add(TextSpan(
+            text: '◆',
+            style: TextStyle(
+              color: theme.colorScheme.primary,
+            ),
+          ));
+        }
+      }
+    }
+
+    return spans;
+  }
+
+  /// تطبيق حجم خط معين على جميع spans.
+  List<InlineSpan> _applyFontSize(List<InlineSpan> spans, double fontSize) {
+    return spans.map((span) {
+      if (span is TextSpan) {
+        return TextSpan(
+          text: span.text,
+          children: span.children != null
+              ? _applyFontSize(span.children!, fontSize)
+              : null,
+          style: (span.style ?? const TextStyle()).copyWith(
+            fontSize: span.style?.fontWeight == FontWeight.bold
+                ? fontSize * 0.85
+                : fontSize,
+          ),
+          recognizer: span.recognizer,
+        );
+      }
+      return span;
+    }).toList();
   }
 
   static List<_VerseSegment> _groupVerses(List<Verse> verses) {
@@ -496,8 +530,9 @@ class _MushafPageState extends State<_MushafPage> {
     return segments;
   }
 
+  /// حجم الخط الأمثل — يقيس النص الفعلي بالضبط كما سيُعرض.
   static double _findOptimalFontSize({
-    required String text,
+    required List<InlineSpan> spans,
     required String fontFamily,
     required double maxWidth,
     required double maxHeight,
@@ -510,22 +545,29 @@ class _MushafPageState extends State<_MushafPage> {
     for (int i = 0; i < 25; i++) {
       final mid = (low + high) / 2;
       final lh = mid < 20 ? 1.6 : mid < 26 ? 1.7 : 1.8;
-      final painter = TextPainter(
-        text: TextSpan(
-          text: text,
-          style: TextStyle(
-            fontFamily: fontFamily,
-            fontSize: mid,
-            height: lh,
-          ),
+
+      // بناء TextSpan بحجم الخط المرشّح
+      final testSpan = TextSpan(
+        children: _applyFontSizeStatic(spans, mid),
+        style: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: mid,
+          height: lh,
+          color: const Color(0xFF000000),
         ),
+      );
+
+      final painter = TextPainter(
+        text: testSpan,
         textDirection: TextDirection.rtl,
         textAlign: TextAlign.center,
         maxLines: null,
       );
       painter.layout(maxWidth: maxWidth);
 
-      if (painter.height <= maxHeight) {
+      // هامش أمان 5%: Flutter يضيف مسافة فقرة وارتفاع WidgetSpan
+      // لا يُقاس بـ TextPainter
+      if (painter.height <= maxHeight * 0.95) {
         bestSize = mid;
         low = mid + 0.25;
       } else {
@@ -537,224 +579,26 @@ class _MushafPageState extends State<_MushafPage> {
     return bestSize;
   }
 
-  /// تقدير ارتفاع المحتوى الكلي (فواصل + نصوص) بحجم خط معين.
-  double _estimateContentHeight({
-    required List<_VerseSegment> segments,
-    required double fontSize,
-    required double lineHeight,
-    required String fontFamily,
-    required double textAreaW,
-  }) {
-    final buffer = StringBuffer();
-    for (final segment in segments) {
-      for (final v in segment.verses) {
-        buffer.write('${v.text} ﴿${toArabicDigits(v.number)}﴾  ');
+  /// نسخة static من _applyFontSize للاستخدام في القياس.
+  static List<InlineSpan> _applyFontSizeStatic(
+      List<InlineSpan> spans, double fontSize) {
+    return spans.map((span) {
+      if (span is TextSpan) {
+        return TextSpan(
+          text: span.text,
+          children: span.children != null
+              ? _applyFontSizeStatic(span.children!, fontSize)
+              : null,
+          style: (span.style ?? const TextStyle()).copyWith(
+            fontSize: span.style?.fontWeight == FontWeight.bold
+                ? fontSize * 0.85
+                : fontSize,
+          ),
+          recognizer: span.recognizer,
+        );
       }
-    }
-    final fullText = buffer.toString();
-
-    final painter = TextPainter(
-      text: TextSpan(
-        text: fullText,
-        style: TextStyle(
-          fontFamily: fontFamily,
-          fontSize: fontSize,
-          height: lineHeight,
-        ),
-      ),
-      textDirection: TextDirection.rtl,
-      textAlign: TextAlign.center,
-      maxLines: null,
-    );
-    painter.layout(maxWidth: textAreaW);
-    final textH = painter.height;
-    painter.dispose();
-
-    final separatorCount = segments.length > 1 ? segments.length - 1 : 0;
-    final separatorH = separatorCount * 68.0;
-
-    return textH + separatorH;
-  }
-}
-
-/// فاصل بين السور — خط ذهبي + اسم السورة + بسملة
-class _SurahSeparator extends StatelessWidget {
-  const _SurahSeparator({
-    required this.surahName,
-    required this.showBismillah,
-    required this.fontFamily,
-    required this.fontSize,
-    required this.theme,
-  });
-
-  final String surahName;
-  final bool showBismillah;
-  final String fontFamily;
-  final double fontSize;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // خط فاصل
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 1,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.transparent,
-                        const Color(0xFFD4A843).withAlpha(150),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD4A843).withAlpha(30),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.auto_stories,
-                  size: fontSize * 0.6,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  height: 1,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.transparent,
-                        const Color(0xFFD4A843).withAlpha(150),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 2),
-          // اسم السورة
-          Text(
-            surahName,
-            style: TextStyle(
-              fontFamily: fontFamily,
-              fontSize: fontSize * 0.8,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
-            ),
-            textDirection: TextDirection.rtl,
-          ),
-          if (showBismillah) ...[
-            const SizedBox(height: 1),
-            Text(
-              'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
-              style: TextStyle(
-                fontFamily: fontFamily,
-                fontSize: fontSize * 0.65,
-                color: theme.colorScheme.primary.withAlpha(180),
-              ),
-              textDirection: TextDirection.rtl,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// نص آيات السورة — فقرة واحدة منسابة (طراز المصحف).
-/// كل آية تفاعلية عبر TapGestureRecognizer.
-class _SegmentText extends StatelessWidget {
-  const _SegmentText({
-    required this.verses,
-    required this.fontSize,
-    required this.lineHeight,
-    required this.fontFamily,
-    required this.theme,
-    required this.bookmarkService,
-    required this.onVerseTap,
-    required this.recognizers,
-  });
-
-  final List<Verse> verses;
-  final double fontSize;
-  final double lineHeight;
-  final String fontFamily;
-  final ThemeData theme;
-  final BookmarkService bookmarkService;
-  final void Function(Verse) onVerseTap;
-  final List<TapGestureRecognizer> recognizers;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text.rich(
-      TextSpan(
-        children: _buildSpans(),
-        style: TextStyle(
-          fontFamily: fontFamily,
-          fontSize: fontSize,
-          height: lineHeight,
-          color: theme.colorScheme.onSurface,
-        ),
-      ),
-      textDirection: TextDirection.rtl,
-      textAlign: TextAlign.center,
-    );
-  }
-
-  List<InlineSpan> _buildSpans() {
-    final spans = <InlineSpan>[];
-
-    for (final verse in verses) {
-      final recognizer = TapGestureRecognizer()
-        ..onTap = () => onVerseTap(verse);
-      recognizers.add(recognizer);
-
-      // نص الآية
-      spans.add(TextSpan(
-        text: verse.text,
-        recognizer: recognizer,
-      ));
-
-      // رقم الآية
-      final isBookmarked = bookmarkService.isBookmarked(verse.key);
-      spans.add(TextSpan(
-        text: ' ﴿${toArabicDigits(verse.number)}﴾ ',
-        style: TextStyle(
-          fontSize: fontSize * 0.8,
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.bold,
-        ),
-        recognizer: recognizer,
-      ));
-
-      if (isBookmarked) {
-        spans.add(WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: Icon(
-            Icons.bookmark,
-            size: fontSize * 0.45,
-            color: theme.colorScheme.primary,
-          ),
-        ));
-      }
-    }
-
-    return spans;
+      return span;
+    }).toList();
   }
 }
 
