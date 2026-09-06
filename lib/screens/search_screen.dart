@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/surah.dart';
 import '../services/bookmark_service.dart';
 import '../services/quran_service.dart';
+import '../services/settings_service.dart';
 import '../utils/arabic_digits.dart';
 import '../utils/page_transitions.dart';
 import '../widgets/error_fallback.dart';
@@ -16,10 +17,12 @@ class SearchScreen extends StatefulWidget {
     super.key,
     required this.quranService,
     required this.bookmarkService,
+    required this.settingsService,
   });
 
   final QuranService quranService;
   final BookmarkService bookmarkService;
+  final SettingsService settingsService;
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -53,6 +56,7 @@ class _SearchScreenState extends State<SearchScreen> {
       page: ReaderScreen(
         quranService: widget.quranService,
         bookmarkService: widget.bookmarkService,
+        settingsService: widget.settingsService,
         surah: widget.quranService.surahOf(verse.chapter),
         initialVerse: verse.number - 1,
       ),

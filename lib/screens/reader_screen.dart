@@ -1,8 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../models/juz.dart';
 import '../models/surah.dart';
@@ -11,8 +12,16 @@ import '../services/quran_service.dart';
 import '../services/settings_service.dart';
 import '../utils/arabic_digits.dart';
 import '../widgets/error_fallback.dart';
+import '../widgets/mushaf_style_picker.dart';
 
-/// شاشة القراءة — كل صفحات المصحف (٦٠٤) متتالية مع تمرير أفقي.
+/// لون ورق المصحف المحيط بصفحة المصحف المطبوعة.
+const _parchment = Color(0xFFFFF8F0);
+
+/// لون ذهبي خفيف لإطار الصفحة.
+const _gold = Color(0xFFD4A843);
+
+/// شاشة القراءة — صفحات المصحف المطبوع (مجمع الملك فهد) كصور رسمية،
+/// كل صفحة معروضة كاملة دون قص ودون تمرير.
 class ReaderScreen extends StatefulWidget {
   const ReaderScreen({
     super.key,
@@ -37,67 +46,106 @@ class _ReaderScreenState extends State<ReaderScreen> {
   late final PageController _pageController;
   Timer? _positionSaveDebounce;
 
-  late final List<_PageData> _pages;
-  int _currentPageIndex = 0;
-  Surah? _currentSurah;
+  /// آيات كل صفحة (١..٦٠٤) وفق ترقيم المصحف.
+  late final Map<int, List<Verse>> _versesByPage;
+
+  /// لكل صفحة: خطوطها الـ ١٥ — كل خط هو [سورة_البداية، آية_البداية، سورة_النهاية، آية_النهاية]
+  /// أو null للخطوط الزخرفية (رأس سورة / بسملة).
+  Map<int, List<List<int>?>> _pageLines = const {};
+
+  int _currentPage = 1;
+  Surah _currentSurah = _placeholderSurah;
   bool _initialSaveDone = false;
 
-  Surah get _displaySurah => _currentSurah ?? widget.surah;
+  static const Surah _placeholderSurah = Surah(
+    number: 1,
+    name: '',
+    transliteration: '',
+    revelation: '',
+    verseCount: 7,
+  );
 
   @override
   void initState() {
     super.initState();
-    _pages = _buildAllPages();
-    _currentSurah = widget.surah;
+    // إبقاء الشاشة مضاءة أثناء القراءة.
+    WakelockPlus.enable();
+    _versesByPage = _buildPageVerses();
 
-    final startPage = widget.quranService.pageOf(
-        widget.surah.number,
-        widget.initialVerse > 0 ? widget.initialVerse : 1);
-    final idx = _pages.indexWhere((p) => p.pageNumber == startPage);
-    _currentPageIndex = idx >= 0 ? idx : 0;
+    var startPage = widget.quranService.pageOf(
+      widget.surah.number,
+      widget.initialVerse > 0 ? widget.initialVerse : 1,
+    );
+    startPage = startPage.clamp(1, QuranService.totalPages);
+    _currentPage = startPage;
 
-    _pageController = PageController(initialPage: _currentPageIndex);
+    final first = _versesByPage[startPage]!.first;
+    _currentSurah = widget.quranService.surahOf(first.chapter);
+
+    _pageController = PageController(initialPage: startPage - 1);
+    _loadPageLines();
   }
 
-  List<_PageData> _buildAllPages() {
-    final pageMap = <int, List<Verse>>{};
-    for (final verse in widget.quranService.allVerses) {
-      final pageNum = widget.quranService.pageOf(verse.chapter, verse.number);
-      (pageMap[pageNum] ??= []).add(verse);
+  Future<void> _loadPageLines() async {
+    try {
+      final raw = await rootBundle.loadString('assets/data/page_lines.json');
+      final decoded = jsonDecode(raw) as Map<String, dynamic>;
+      final lines = <int, List<List<int>?>>{};
+      for (final e in decoded.entries) {
+        final page = int.parse(e.key);
+        final list = (e.value as List<dynamic>)
+            .map((l) => l == null
+                ? null
+                : (l as List<dynamic>).cast<int>())
+            .toList();
+        lines[page] = list;
+      }
+      if (mounted) {
+        setState(() => _pageLines = lines);
+      }
+    } catch (_) {
+      // بدون بيانات الخطوط تبقى الصفحات قابلة للتصفح (النقر متاح على مستوى الصفحة فقط).
     }
-    return [
-      for (final entry in pageMap.entries)
-        _PageData(
-          verses: List.unmodifiable(entry.value),
-          pageNumber: entry.key,
-        ),
-    ]..sort((a, b) => a.pageNumber.compareTo(b.pageNumber));
   }
 
-  void _saveCurrentPosition() {
-    if (_currentPageIndex < 0 || _currentPageIndex >= _pages.length) return;
-    final page = _pages[_currentPageIndex];
-    final firstVerse = page.verses.first;
-    widget.bookmarkService.setLastRead(firstVerse.chapter, firstVerse.number);
+  Map<int, List<Verse>> _buildPageVerses() {
+    final map = <int, List<Verse>>{};
+    for (final verse in widget.quranService.allVerses) {
+      final page = widget.quranService.pageOf(verse.chapter, verse.number);
+      (map[page] ??= []).add(verse);
+    }
+    return map;
+  }
+
+  Juz get _currentJuz {
+    final first = _versesByPage[_currentPage]!.first;
+    return Juz.of(first.chapter, first.number);
+  }
+
+  void _savePositionForPage(int page) {
+    final verses = _versesByPage[page];
+    if (verses == null || verses.isEmpty) return;
+    final first = verses.first;
+    widget.bookmarkService.setLastRead(first.chapter, first.number);
   }
 
   void _onPageChanged(int index) {
-    if (index < 0 || index >= _pages.length) return;
-    final page = _pages[index];
-    final firstVerse = page.verses.first;
-    final newSurah = widget.quranService.surahOf(firstVerse.chapter);
+    if (index < 0 || index >= QuranService.totalPages) return;
+    final page = index + 1;
+    final verses = _versesByPage[page];
+    if (verses == null || verses.isEmpty) return;
 
     if (mounted) {
       setState(() {
-        _currentPageIndex = index;
-        _currentSurah = newSurah;
+        _currentPage = page;
+        _currentSurah = widget.quranService.surahOf(verses.first.chapter);
       });
     }
 
     _positionSaveDebounce?.cancel();
     _positionSaveDebounce = Timer(const Duration(milliseconds: 400), () {
       if (!mounted) return;
-      _saveCurrentPosition();
+      _savePositionForPage(page);
     });
   }
 
@@ -105,16 +153,75 @@ class _ReaderScreenState extends State<ReaderScreen> {
     if (_initialSaveDone) return;
     _initialSaveDone = true;
     Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) _saveCurrentPosition();
+      if (mounted) _savePositionForPage(_currentPage);
     });
   }
 
   @override
   void dispose() {
     _positionSaveDebounce?.cancel();
-    _saveCurrentPosition();
+    _savePositionForPage(_currentPage);
     _pageController.dispose();
+    // السماح للشاشة بالخمول مرة أخرى عند مغادرة القارئ.
+    WakelockPlus.disable();
     super.dispose();
+  }
+
+  /// آيات تغطي سطرًا معينًا (نطاق قد يعبر حدود السورة في بداية/نهاية الصفحة).
+  List<Verse> _versesInRange(List<int> range) {
+    final startKey = '${range[0]}:${range[1]}';
+    final endKey = '${range[2]}:${range[3]}';
+    final all = widget.quranService.allVerses;
+    final start = all.indexWhere((v) => v.key == startKey);
+    final end = all.indexWhere((v) => v.key == endKey);
+    if (start < 0 || end < 0 || end < start) return const [];
+    return all.sublist(start, end + 1);
+  }
+
+  Future<void> _onPageTap(TapUpDetails details, int page, double height) async {
+    final lines = _pageLines[page];
+    if (lines == null || lines.isEmpty) return;
+    final lineCount = lines.length;
+    final lineIdx = (details.localPosition.dy / height * lineCount)
+        .floor()
+        .clamp(0, lineCount - 1);
+    final range = lines[lineIdx];
+    if (range == null) return; // رأس سورة أو بسملة
+
+    final verses = _versesInRange(range);
+    if (verses.isEmpty) return;
+    if (verses.length == 1) {
+      _showVerseActions(verses.first);
+      return;
+    }
+    // أكثر من آية في السطر — اختيار الآية المطلوبة.
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+              child: Text(
+                'اختر الآية',
+                style: Theme.of(context).textTheme.titleMedium,
+                textAlign: TextAlign.center,
+              ),
+            ),
+            for (final verse in verses) _VerseSheetTile(
+              verse: verse,
+              surahName: widget.quranService.surahOf(verse.chapter).name,
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _showVerseActions(verse);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _showVerseActions(Verse verse) async {
@@ -133,8 +240,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 verse.text,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily:
-                      widget.settingsService?.fontFamily ?? 'Amiri Quran',
+                  fontFamily: widget.settingsService?.fontFamily ?? 'Amiri Quran',
                   fontSize: 20,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
@@ -159,9 +265,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 isBookmarked ? Icons.bookmark_remove : Icons.bookmark_add,
                 color: Theme.of(context).colorScheme.primary,
               ),
-              title: Text(isBookmarked
-                  ? 'إزالة من العلامات المرجعية'
-                  : 'إضافة إلى العلامات المرجعية'),
+              title: Text(
+                isBookmarked
+                    ? 'إزالة من العلامات المرجعية'
+                    : 'إضافة إلى العلامات المرجعية',
+              ),
               onTap: () {
                 Navigator.of(sheetContext).pop();
                 widget.bookmarkService.toggleBookmark(verse.key);
@@ -171,9 +279,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
               leading: const Icon(Icons.copy),
               title: const Text('نسخ الآية'),
               onTap: () {
-                Clipboard.setData(ClipboardData(
+                Clipboard.setData(
+                  ClipboardData(
                     text:
-                        '${verse.text}\n﴿${toArabicDigits(verse.number)}﴾ سورة ${surah.name}'));
+                        '${verse.text}\n﴿${toArabicDigits(verse.number)}﴾ سورة ${surah.name}',
+                  ),
+                );
                 Navigator.of(sheetContext).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('تم نسخ الآية')),
@@ -192,56 +303,130 @@ class _ReaderScreenState extends State<ReaderScreen> {
       builder: (_) => const _JumpDialog(),
     );
     if (result != null && mounted) {
-      final targetIndex = _pages.indexWhere((p) => p.pageNumber == result);
-      if (targetIndex >= 0 && _pageController.hasClients) {
+      final targetIndex = result - 1;
+      if (targetIndex >= 0 &&
+          targetIndex < QuranService.totalPages &&
+          _pageController.hasClients) {
         _pageController.jumpToPage(targetIndex);
       }
     }
   }
 
+  Future<void> _showStylePicker() async {
+    final settings = widget.settingsService;
+    if (settings == null) return;
+    final picked = await showMushafStylePicker(context, settings);
+    if (picked != null && mounted) {
+      await settings.setStyle(picked);
+    }
+  }
+
+  /// عرض الصفحات — يتفاعل مع تغيير نمط المصحف (مدني/تجويد) ويبقي على نفس الصفحة.
+  Widget _buildPageView() {
+    final settings = widget.settingsService;
+    if (settings == null) {
+      return PageView.builder(
+        controller: _pageController,
+        itemCount: QuranService.totalPages,
+        onPageChanged: _onPageChanged,
+        itemBuilder: _buildPageItem,
+      );
+    }
+    // نفس الـ controller عبر إعادة البناء — يحافظ PageView على موقعه تلقائيًا،
+    // فلا نقفز للصفحة الأولى عند تغيير النمط.
+    return ListenableBuilder(
+      listenable: settings,
+      builder: (context, _) => PageView.builder(
+        controller: _pageController,
+        itemCount: QuranService.totalPages,
+        onPageChanged: _onPageChanged,
+        itemBuilder: _buildPageItem,
+      ),
+    );
+  }
+
+  /// صفحة المصحف: صورة كاملة مناسبة للمساحة (بدون قص/تمرير).
+  Widget _buildPageItem(BuildContext context, int index) {
+    final page = index + 1;
+    final style = widget.settingsService?.style ?? MushafStyle.madani;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final areaW = constraints.maxWidth;
+        final areaH = constraints.maxHeight;
+        final scaleW = areaW / style.imgW;
+        final scaleH = areaH / style.imgH;
+        final scale = scaleW < scaleH ? scaleW : scaleH;
+        final dispW = style.imgW * scale;
+        final dispH = style.imgH * scale;
+        return Center(
+          child: Container(
+            width: dispW,
+            height: dispH,
+            // إطار ذهبي رفيع بدلًا من الظل الداكن — صفحة نظيفة بلا ظلال.
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: _gold.withAlpha(90),
+                width: 1,
+              ),
+              borderRadius: BorderRadius.circular(2),
+            ),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTapUp: (details) => _onPageTap(details, page, dispH),
+              child: Image.asset(
+                style.pageAsset(page),
+                fit: BoxFit.fill,
+                gaplessPlayback: true,
+                filterQuality: FilterQuality.high,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final fontFamily = widget.settingsService?.fontFamily ?? 'Amiri Quran';
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: _parchment,
       appBar: AppBar(
-        title: Text(_displaySurah.name),
+        title: Text(_currentSurah.name),
         centerTitle: true,
         actions: [
+          IconButton(
+            onPressed: _showStylePicker,
+            icon: const Icon(Icons.palette_outlined),
+            tooltip: 'نمط المصحف',
+          ),
           IconButton(
             onPressed: _showJumpToPageDialog,
             icon: const Icon(Icons.book),
             tooltip: 'انتقل إلى صفحة',
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(26),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              '${_currentJuz.name} · صفحة ${toArabicDigits(_currentPage)}',
+              style: TextStyle(
+                fontSize: 13,
+                color: theme.colorScheme.onPrimary.withAlpha(220),
+              ),
+              textDirection: TextDirection.rtl,
+            ),
+          ),
+        ),
       ),
       body: SafeChild(
         builder: (_) {
-          final surahNames = {
-            for (final s in widget.quranService.surahs) s.number: s.name,
-          };
           WidgetsBinding.instance.addPostFrameCallback((_) => _onPageBuilt());
-          return PageView.builder(
-            controller: _pageController,
-            itemCount: _pages.length,
-            onPageChanged: _onPageChanged,
-            itemBuilder: (context, index) {
-              final page = _pages[index];
-              final firstChapter = page.verses.first.chapter;
-              final showBismillah = page.verses.first.number == 1 &&
-                  firstChapter != 1 &&
-                  firstChapter != 9;
-              final juz = Juz.of(firstChapter, page.verses.first.number);
-              return _MushafPage(
-                page: page,
-                juz: juz,
-                showBismillah: showBismillah,
-                surahName: surahNames[firstChapter],
-                onVerseTap: _showVerseActions,
-                fontFamily: fontFamily,
-                surahNames: surahNames,
-                bookmarkService: widget.bookmarkService,
-              );
-            },
+          return SafeArea(
+            top: false,
+            child: _buildPageView(),
           );
         },
       ),
@@ -249,365 +434,48 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 }
 
-/// بيانات صفحة واحدة.
-class _PageData {
-  final List<Verse> verses;
-  final int pageNumber;
-
-  const _PageData({required this.verses, required this.pageNumber});
-}
-
-/// صفحة مصحف — كل المحتوى في Text.rich واحد لضمان دقة قياس الخط.
-class _MushafPage extends StatefulWidget {
-  const _MushafPage({
-    required this.page,
-    required this.juz,
-    required this.showBismillah,
-    this.surahName,
-    required this.onVerseTap,
-    required this.fontFamily,
-    this.surahNames,
-    required this.bookmarkService,
+class _VerseSheetTile extends StatelessWidget {
+  const _VerseSheetTile({
+    required this.verse,
+    required this.surahName,
+    required this.onTap,
   });
 
-  final _PageData page;
-  final Juz juz;
-  final bool showBismillah;
-  final String? surahName;
-  final void Function(Verse) onVerseTap;
-  final String fontFamily;
-  final Map<int, String>? surahNames;
-  final BookmarkService bookmarkService;
-
-  @override
-  State<_MushafPage> createState() => _MushafPageState();
-}
-
-class _MushafPageState extends State<_MushafPage> {
-  final List<TapGestureRecognizer> _recognizers = [];
-
-  @override
-  void dispose() {
-    for (final r in _recognizers) {
-      r.dispose();
-    }
-    super.dispose();
-  }
+  final Verse verse;
+  final String surahName;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final segments = _groupVerses(widget.page.verses);
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxH = constraints.maxHeight;
-        final maxW = constraints.maxWidth;
-
-        const paddingV = 10.0;
-        const headerH = 30.0;
-        final bismillahH = widget.showBismillah ? 56.0 : 0.0;
-
-        // المساحة المتاحة للنص الكامل (مع الفواصل النصية)
-        final textAreaH = maxH - (paddingV * 2) - headerH - bismillahH - 12;
-        final textAreaW = maxW - 32;
-
-        // ── تنظيف recognizer القديمة ──
-        for (final r in _recognizers) {
-          r.dispose();
-        }
-        _recognizers.clear();
-
-        // ── بناء كل النص كـ TextSpan واحد ──
-        final allSpans = _buildAllSpans(segments, theme);
-
-        // ── حساب الخط الأمثل ──
-        final fontSize = _findOptimalFontSize(
-          spans: allSpans,
-          fontFamily: widget.fontFamily,
-          maxWidth: textAreaW,
-          maxHeight: textAreaH,
-        );
-        final lineHeight = fontSize < 20 ? 1.6 : fontSize < 26 ? 1.7 : 1.8;
-
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: paddingV),
-          decoration: BoxDecoration(
-            color: theme.brightness == Brightness.dark
-                ? const Color(0xFF252525)
-                : const Color(0xFFFFF8F0),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFD4A843).withAlpha(60),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(15),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // ── رأس الصفحة ──
-              SizedBox(
-                height: headerH,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.star,
-                        size: 10,
-                        color: const Color(0xFFD4A843).withAlpha(120)),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${widget.juz.name} · صفحة ${toArabicDigits(widget.page.pageNumber)}',
-                      style: TextStyle(
-                        fontFamily: widget.fontFamily,
-                        fontSize: 13,
-                        color: theme.colorScheme.outline,
-                      ),
-                      textDirection: TextDirection.rtl,
-                    ),
-                    const SizedBox(width: 6),
-                    Icon(Icons.star,
-                        size: 10,
-                        color: const Color(0xFFD4A843).withAlpha(120)),
-                  ],
-                ),
-              ),
-
-              // ── بسملة البداية ──
-              if (widget.showBismillah) ...[
-                SizedBox(
-                  height: bismillahH,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (widget.surahName != null) ...[
-                          Text(
-                            widget.surahName!,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: widget.fontFamily,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                        ],
-                        Text(
-                          'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: widget.fontFamily,
-                            fontSize: 22,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-
-              // ── النص الكامل — فقرة واحدة مركوزة ──
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: _applyFontSize(allSpans, fontSize),
-                    style: TextStyle(
-                      fontFamily: widget.fontFamily,
-                      fontSize: fontSize,
-                      height: lineHeight,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                  textDirection: TextDirection.rtl,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    return ListTile(
+      leading: Text(
+        toArabicDigits(verse.number),
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+      title: Text(
+        verse.text,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        textDirection: TextDirection.rtl,
+        style: const TextStyle(fontSize: 15),
+      ),
+      subtitle: Text(
+        'سورة $surahName',
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.outline,
+          fontSize: 12,
+        ),
+      ),
+      onTap: onTap,
     );
   }
-
-  /// بناء جميع spans للصفحة: فواصل السور + آيات مع tap recognizers.
-  List<InlineSpan> _buildAllSpans(List<_VerseSegment> segments, ThemeData theme) {
-    final spans = <InlineSpan>[];
-
-    for (int s = 0; s < segments.length; s++) {
-      // ── فاصل بين السور ──
-      if (s > 0) {
-        final ch = segments[s].chapter;
-        final name = widget.surahNames?[ch] ?? '';
-        final hasBismillah = ch != 1 && ch != 9;
-
-        spans.add(TextSpan(text: '\n\n'));
-        spans.add(TextSpan(
-          text: '$name\n',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ));
-        if (hasBismillah) {
-          spans.add(TextSpan(
-            text: 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ\n',
-          ));
-        }
-      }
-
-      // ── آيات السورة ──
-      for (final verse in segments[s].verses) {
-        final recognizer = TapGestureRecognizer()
-          ..onTap = () => widget.onVerseTap(verse);
-        _recognizers.add(recognizer);
-
-        // نص الآية
-        spans.add(TextSpan(
-          text: verse.text,
-          recognizer: recognizer,
-        ));
-
-        // رقم الآية
-        final isBookmarked = widget.bookmarkService.isBookmarked(verse.key);
-        spans.add(TextSpan(
-          text: ' ﴿${toArabicDigits(verse.number)}﴾ ',
-          recognizer: recognizer,
-        ));
-
-        // رمز العلامة (نص بدلاً من WidgetSpan لدقة القياس)
-        if (isBookmarked) {
-          spans.add(TextSpan(
-            text: '◆',
-            style: TextStyle(
-              color: theme.colorScheme.primary,
-            ),
-          ));
-        }
-      }
-    }
-
-    return spans;
-  }
-
-  /// تطبيق حجم خط معين على جميع spans.
-  List<InlineSpan> _applyFontSize(List<InlineSpan> spans, double fontSize) {
-    return spans.map((span) {
-      if (span is TextSpan) {
-        return TextSpan(
-          text: span.text,
-          children: span.children != null
-              ? _applyFontSize(span.children!, fontSize)
-              : null,
-          style: (span.style ?? const TextStyle()).copyWith(
-            fontSize: span.style?.fontWeight == FontWeight.bold
-                ? fontSize * 0.85
-                : fontSize,
-          ),
-          recognizer: span.recognizer,
-        );
-      }
-      return span;
-    }).toList();
-  }
-
-  static List<_VerseSegment> _groupVerses(List<Verse> verses) {
-    final segments = <_VerseSegment>[];
-    for (final v in verses) {
-      if (segments.isEmpty || segments.last.chapter != v.chapter) {
-        segments.add(_VerseSegment(v.chapter, [v]));
-      } else {
-        segments.last.verses.add(v);
-      }
-    }
-    return segments;
-  }
-
-  /// حجم الخط الأمثل — يقيس النص الفعلي بالضبط كما سيُعرض.
-  static double _findOptimalFontSize({
-    required List<InlineSpan> spans,
-    required String fontFamily,
-    required double maxWidth,
-    required double maxHeight,
-  }) {
-    if (maxWidth <= 0 || maxHeight <= 0) return 18.0;
-    double low = 12.0;
-    double high = 36.0;
-    double bestSize = 14.0;
-
-    for (int i = 0; i < 25; i++) {
-      final mid = (low + high) / 2;
-      final lh = mid < 20 ? 1.6 : mid < 26 ? 1.7 : 1.8;
-
-      // بناء TextSpan بحجم الخط المرشّح
-      final testSpan = TextSpan(
-        children: _applyFontSizeStatic(spans, mid),
-        style: TextStyle(
-          fontFamily: fontFamily,
-          fontSize: mid,
-          height: lh,
-          color: const Color(0xFF000000),
-        ),
-      );
-
-      final painter = TextPainter(
-        text: testSpan,
-        textDirection: TextDirection.rtl,
-        textAlign: TextAlign.center,
-        maxLines: null,
-      );
-      painter.layout(maxWidth: maxWidth);
-
-      // هامش أمان 5%: Flutter يضيف مسافة فقرة وارتفاع WidgetSpan
-      // لا يُقاس بـ TextPainter
-      if (painter.height <= maxHeight * 0.95) {
-        bestSize = mid;
-        low = mid + 0.25;
-      } else {
-        high = mid - 0.25;
-      }
-      painter.dispose();
-    }
-
-    return bestSize;
-  }
-
-  /// نسخة static من _applyFontSize للاستخدام في القياس.
-  static List<InlineSpan> _applyFontSizeStatic(
-      List<InlineSpan> spans, double fontSize) {
-    return spans.map((span) {
-      if (span is TextSpan) {
-        return TextSpan(
-          text: span.text,
-          children: span.children != null
-              ? _applyFontSizeStatic(span.children!, fontSize)
-              : null,
-          style: (span.style ?? const TextStyle()).copyWith(
-            fontSize: span.style?.fontWeight == FontWeight.bold
-                ? fontSize * 0.85
-                : fontSize,
-          ),
-          recognizer: span.recognizer,
-        );
-      }
-      return span;
-    }).toList();
-  }
 }
 
-class _VerseSegment {
-  final int chapter;
-  final List<Verse> verses;
-  _VerseSegment(this.chapter, this.verses);
-}
-
+/// نافذة الانتقال إلى صفحة محددة (١-٦٠٤).
 class _JumpDialog extends StatefulWidget {
   const _JumpDialog();
 

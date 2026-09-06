@@ -108,12 +108,14 @@ class _HomeShellState extends State<HomeShell> {
         builder: (_) => SearchScreen(
           quranService: widget.quranService,
           bookmarkService: widget.bookmarkService,
+          settingsService: widget.settingsService,
         ),
       ),
       SafeChild(
         builder: (_) => BookmarksScreen(
           quranService: widget.quranService,
           bookmarkService: widget.bookmarkService,
+          settingsService: widget.settingsService,
         ),
       ),
     ];

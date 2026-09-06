@@ -7,6 +7,7 @@ import '../services/quran_service.dart';
 import '../services/settings_service.dart';
 import '../utils/arabic_digits.dart';
 import '../utils/page_transitions.dart';
+import '../widgets/mushaf_style_picker.dart';
 import 'reader_screen.dart';
 
 /// الشاشة الرئيسية: قائمة السور والأجزاء مع متابعة القراءة الأخيرة.
@@ -59,6 +60,14 @@ class _HomeScreenState extends State<HomeScreen>
     _openSurah(context, surah, juz.startVerse - 1);
   }
 
+  Future<void> _showStylePicker() async {
+    final picked =
+        await showMushafStylePicker(context, widget.settingsService);
+    if (picked != null) {
+      await widget.settingsService.setStyle(picked);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -98,36 +107,10 @@ class _HomeScreenState extends State<HomeScreen>
               title: const Text('القرآن الكريم'),
             ),
             actions: [
-              ListenableBuilder(
-                listenable: widget.settingsService,
-                builder: (context, _) {
-                  return PopupMenuButton<QuranFont>(
-                    icon: const Icon(Icons.font_download_outlined,
-                        color: Colors.white),
-                    tooltip: 'تغيير الخط',
-                    onSelected: (font) => widget.settingsService.setFont(font),
-                    itemBuilder: (context) => [
-                      for (final font in QuranFont.values)
-                        PopupMenuItem(
-                          value: font,
-                          child: Row(
-                            children: [
-                              if (font == widget.settingsService.font)
-                                Icon(Icons.check,
-                                    size: 18, color: Theme.of(context).colorScheme.primary)
-                              else
-                                const SizedBox(width: 18),
-                              const SizedBox(width: 8),
-                              Text(
-                                font.displayName,
-                                style: TextStyle(fontFamily: font.familyName, fontSize: 18),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  );
-                },
+              IconButton(
+                onPressed: _showStylePicker,
+                icon: const Icon(Icons.palette_outlined, color: Colors.white),
+                tooltip: 'نمط المصحف',
               ),
             ],
           ),
