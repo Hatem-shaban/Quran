@@ -17,9 +17,6 @@ import '../widgets/mushaf_style_picker.dart';
 /// لون ورق المصحف المحيط بصفحة المصحف المطبوعة.
 const _parchment = Color(0xFFFFF8F0);
 
-/// لون ذهبي خفيف لإطار الصفحة.
-const _gold = Color(0xFFD4A843);
-
 /// شاشة القراءة — صفحات المصحف المطبوع (مجمع الملك فهد) كصور رسمية،
 /// كل صفحة معروضة كاملة دون قص ودون تمرير.
 class ReaderScreen extends StatefulWidget {
@@ -52,6 +49,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
   /// لكل صفحة: خطوطها الـ ١٥ — كل خط هو [سورة_البداية، آية_البداية، سورة_النهاية، آية_النهاية]
   /// أو null للخطوط الزخرفية (رأس سورة / بسملة).
   Map<int, List<List<int>?>> _pageLines = const {};
+
+  /// لكل نمط وصفحة: الحدود اليسرى/اليمنى لكتلة النص (كسور من عرض الصورة) —
+  /// تُستخدم لتكبير الصفحة إلى أقصى حجم لا يُقصّ فيه أي نص.
+  Map<String, Map<int, ({double left, double right})>> _pageExtents = {};
 
   int _currentPage = 1;
   Surah _currentSurah = _placeholderSurah;
@@ -105,6 +106,27 @@ class _ReaderScreenState extends State<ReaderScreen> {
       }
     } catch (_) {
       // بدون بيانات الخطوط تبقى الصفحات قابلة للتصفح (النقر متاح على مستوى الصفحة فقط).
+    }
+    try {
+      final raw = await rootBundle.loadString('assets/data/page_extents.json');
+      final decoded = jsonDecode(raw) as Map<String, dynamic>;
+      final extents = <String, Map<int, ({double left, double right})>>{};
+      for (final e in decoded.entries) {
+        final pages = <int, ({double left, double right})>{};
+        for (final pe in (e.value as Map<String, dynamic>).entries) {
+          final arr = (pe.value as List<dynamic>).cast<num>();
+          pages[int.parse(pe.key)] = (
+            left: arr[0].toDouble(),
+            right: arr[1].toDouble(),
+          );
+        }
+        extents[e.key] = pages;
+      }
+      if (mounted) {
+        setState(() => _pageExtents = extents);
+      }
+    } catch (_) {
+      // بدون البيانات تُعرض الصفحة بعرضها الكامل.
     }
   }
 
@@ -178,13 +200,17 @@ class _ReaderScreenState extends State<ReaderScreen> {
     return all.sublist(start, end + 1);
   }
 
-  Future<void> _onPageTap(TapUpDetails details, int page, double height) async {
+  Future<void> _onPageTap(
+    TapUpDetails details,
+    int page,
+    double height, {
+    double yOffset = 0,
+  }) async {
     final lines = _pageLines[page];
     if (lines == null || lines.isEmpty) return;
     final lineCount = lines.length;
-    final lineIdx = (details.localPosition.dy / height * lineCount)
-        .floor()
-        .clamp(0, lineCount - 1);
+    final y = details.localPosition.dy - yOffset;
+    final lineIdx = (y / height * lineCount).floor().clamp(0, lineCount - 1);
     final range = lines[lineIdx];
     if (range == null) return; // رأس سورة أو بسملة
 
@@ -345,41 +371,51 @@ class _ReaderScreenState extends State<ReaderScreen> {
     );
   }
 
-  /// صفحة المصحف: صورة كاملة مناسبة للمساحة (بدون قص/تمرير).
+  /// صفحة المصحف: تكبير الصورة إلى أقصى حجم لا يُقصّ فيه أي نص —
+  /// تُقاس حدود كتلة النص لكل صفحة (page_extents.json) ويُضبط التكبير
+  /// ليملأ الارتفاع ما أمكن، مع قص الهوامش البيضاء الجانبية فقط.
   Widget _buildPageItem(BuildContext context, int index) {
     final page = index + 1;
     final style = widget.settingsService?.style ?? MushafStyle.madani;
+    final extents = _pageExtents[style.name]?[page];
     return LayoutBuilder(
       builder: (context, constraints) {
         final areaW = constraints.maxWidth;
         final areaH = constraints.maxHeight;
-        final scaleW = areaW / style.imgW;
+        final left = extents?.left ?? 0.03;
+        final right = extents?.right ?? 0.03;
+        // نص كامل: كتلة النص تشغل (1 - left - right) من عرض الصورة.
+        // لا نسمح بقص أكثر من ٦٪ من كل جانب حتى مع بيانات غير دقيقة.
+        final usable = (1 - left - right).clamp(0.88, 1.0);
         final scaleH = areaH / style.imgH;
+        final scaleW = areaW / (style.imgW * usable);
         final scale = scaleW < scaleH ? scaleW : scaleH;
         final dispW = style.imgW * scale;
         final dispH = style.imgH * scale;
-        return Center(
-          child: Container(
-            width: dispW,
-            height: dispH,
-            // إطار ذهبي رفيع بدلًا من الظل الداكن — صفحة نظيفة بلا ظلال.
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: _gold.withAlpha(90),
-                width: 1,
+        // نوسّط كتلة النص (وليس الصورة كاملة) أفقيًا حتى لا يُقصّ نص
+        // عند حافة أضيق من الأخرى.
+        final shift = (areaW - dispW) / 2 + dispW * (right - left) / 2;
+        final topPad = (areaH - dispH) / 2;
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapUp: (details) =>
+              _onPageTap(details, page, dispH, yOffset: topPad),
+          child: Stack(
+            clipBehavior: Clip.hardEdge,
+            children: [
+              Positioned(
+                left: shift,
+                top: topPad,
+                child: Image.asset(
+                  style.pageAsset(page),
+                  width: dispW,
+                  height: dispH,
+                  fit: BoxFit.fill,
+                  gaplessPlayback: true,
+                  filterQuality: FilterQuality.high,
+                ),
               ),
-              borderRadius: BorderRadius.circular(2),
-            ),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTapUp: (details) => _onPageTap(details, page, dispH),
-              child: Image.asset(
-                style.pageAsset(page),
-                fit: BoxFit.fill,
-                gaplessPlayback: true,
-                filterQuality: FilterQuality.high,
-              ),
-            ),
+            ],
           ),
         );
       },
