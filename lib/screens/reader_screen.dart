@@ -388,7 +388,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
         // لا نسمح بقص أكثر من ٦٪ من كل جانب حتى مع بيانات غير دقيقة.
         final usable = (1 - left - right).clamp(0.88, 1.0);
         final scaleH = areaH / style.imgH;
-        final scaleW = areaW / (style.imgW * usable);
+        // هامش أمان ٢٪: قياس حدود النص تقريبي، وقد تُقصّ حروف متطاولة
+        // عند الحافة إذا مُلئ العرض بالكامل.
+        final scaleW = (areaW * 0.98) / (style.imgW * usable);
         final scale = scaleW < scaleH ? scaleW : scaleH;
         final dispW = style.imgW * scale;
         final dispH = style.imgH * scale;
