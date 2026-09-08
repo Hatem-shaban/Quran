@@ -456,7 +456,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: _parchment,
-      appBar: _chromeVisible ? AppBar(
+      appBar: _chromeVisible
+          ? AppBar(
         title: Text(_currentSurah.name),
         centerTitle: true,
         actions: [
