@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/bookmark_service.dart';
 import '../services/quran_service.dart';
 import '../services/settings_service.dart';
+import '../services/ui_controller.dart';
 import '../utils/arabic_digits.dart';
 import '../utils/page_transitions.dart';
 import '../widgets/error_fallback.dart';
@@ -15,11 +16,13 @@ class BookmarksScreen extends StatelessWidget {
     required this.quranService,
     required this.bookmarkService,
     required this.settingsService,
+    required this.uiController,
   });
 
   final QuranService quranService;
   final BookmarkService bookmarkService;
   final SettingsService settingsService;
+  final UiController uiController;
 
   void _openBookmark(BuildContext context, int chapter, int verse) {
     Navigator.of(context).push(SlideRoute(
@@ -27,6 +30,7 @@ class BookmarksScreen extends StatelessWidget {
         quranService: quranService,
         bookmarkService: bookmarkService,
         settingsService: settingsService,
+        uiController: uiController,
         surah: quranService.surahOf(chapter),
         initialVerse: verse - 1,
       ),

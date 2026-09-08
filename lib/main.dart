@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'screens/bookmarks_screen.dart';
@@ -9,6 +10,7 @@ import 'screens/search_screen.dart';
 import 'services/bookmark_service.dart';
 import 'services/quran_service.dart';
 import 'services/settings_service.dart';
+import 'services/ui_controller.dart';
 import 'widgets/error_fallback.dart';
 
 Future<void> main() async {
@@ -89,7 +91,11 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _currentIndex = 0;
+  // التنقل بين التبويبات يُدار عبر ValueNotifier حتى يستمر ظهور الشريط السفلي
+  // عبر كل الشاشات (بما فيها شاشة القراءة) مع الحفاظ على حالة كل تبويب.
+  final GlobalKey<NavigatorState> _navKey = GlobalKey<NavigatorState>();
+  final ValueNotifier<int> _tabIndex = ValueNotifier<int>(0);
+  final UiController _uiController = UiController();
 
   late final List<Widget> _tabs;
 
@@ -102,6 +108,7 @@ class _HomeShellState extends State<HomeShell> {
           quranService: widget.quranService,
           bookmarkService: widget.bookmarkService,
           settingsService: widget.settingsService,
+          uiController: _uiController,
         ),
       ),
       SafeChild(
@@ -109,6 +116,7 @@ class _HomeShellState extends State<HomeShell> {
           quranService: widget.quranService,
           bookmarkService: widget.bookmarkService,
           settingsService: widget.settingsService,
+          uiController: _uiController,
         ),
       ),
       SafeChild(
@@ -116,38 +124,94 @@ class _HomeShellState extends State<HomeShell> {
           quranService: widget.quranService,
           bookmarkService: widget.bookmarkService,
           settingsService: widget.settingsService,
+          uiController: _uiController,
         ),
       ),
     ];
   }
 
   @override
+  void dispose() {
+    _tabIndex.dispose();
+    _uiController.dispose();
+    super.dispose();
+  }
+
+  void _onDestinationSelected(int index) {
+    // إن كانت شاشة القراءة مفتوحة، أغلقها ثم بدّل التبويب.
+    final nav = _navKey.currentState;
+    if (nav != null && nav.canPop()) {
+      nav.pop();
+    }
+    _tabIndex.value = index;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: IndexedStack(index: _currentIndex, children: _tabs),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _currentIndex,
-          onDestinationSelected: (index) =>
-              setState(() => _currentIndex = index),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.menu_book_outlined),
-              selectedIcon: Icon(Icons.menu_book),
-              label: 'المصحف',
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          // زر الرجوع: أغلق شاشة القراءة أولًا، ثم اخرج من التطبيق.
+          final nav = _navKey.currentState;
+          if (nav != null && nav.canPop()) {
+            nav.pop();
+          } else {
+            SystemNavigator.pop();
+          }
+        },
+        child: Scaffold(
+          body: Navigator(
+            key: _navKey,
+            onGenerateRoute: (settings) => MaterialPageRoute<dynamic>(
+              settings: settings,
+              builder: (_) => ValueListenableBuilder<int>(
+                valueListenable: _tabIndex,
+                builder: (_, index, _) =>
+                    IndexedStack(index: index, children: _tabs),
+              ),
             ),
-            NavigationDestination(
-              icon: Icon(Icons.search_outlined),
-              selectedIcon: Icon(Icons.search),
-              label: 'البحث',
+          ),
+          bottomNavigationBar: ValueListenableBuilder<int>(
+            valueListenable: _tabIndex,
+            builder: (_, index, _) => ValueListenableBuilder<bool>(
+              valueListenable: _uiController.chromeVisible,
+              builder: (_, visible, _) {
+                final navBar = NavigationBar(
+                  selectedIndex: index,
+                  onDestinationSelected: _onDestinationSelected,
+                  destinations: const [
+                    NavigationDestination(
+                      icon: Icon(Icons.menu_book_outlined),
+                      selectedIcon: Icon(Icons.menu_book),
+                      label: 'المصحف',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.search_outlined),
+                      selectedIcon: Icon(Icons.search),
+                      label: 'البحث',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.bookmark_border),
+                      selectedIcon: Icon(Icons.bookmark),
+                      label: 'العلامات',
+                    ),
+                  ],
+                );
+                // في وضع التركيز يُخفي الشريط السفلي لتمتلئ الصفحة بكامل الشاشة.
+                return AnimatedSize(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  alignment: Alignment.bottomCenter,
+                  child: visible
+                      ? navBar
+                      : const SizedBox(width: double.infinity),
+                );
+              },
             ),
-            NavigationDestination(
-              icon: Icon(Icons.bookmark_border),
-              selectedIcon: Icon(Icons.bookmark),
-              label: 'العلامات',
-            ),
-          ],
+          ),
         ),
       ),
     );

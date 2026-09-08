@@ -10,6 +10,7 @@ import '../models/surah.dart';
 import '../services/bookmark_service.dart';
 import '../services/quran_service.dart';
 import '../services/settings_service.dart';
+import '../services/ui_controller.dart';
 import '../utils/arabic_digits.dart';
 import '../widgets/error_fallback.dart';
 import '../widgets/mushaf_style_picker.dart';
@@ -25,6 +26,7 @@ class ReaderScreen extends StatefulWidget {
     required this.quranService,
     required this.bookmarkService,
     this.settingsService,
+    required this.uiController,
     required this.surah,
     this.initialVerse = 0,
   });
@@ -32,6 +34,7 @@ class ReaderScreen extends StatefulWidget {
   final QuranService quranService;
   final BookmarkService bookmarkService;
   final SettingsService? settingsService;
+  final UiController uiController;
   final Surah surah;
   final int initialVerse;
 
@@ -57,6 +60,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
   int _currentPage = 1;
   Surah _currentSurah = _placeholderSurah;
   bool _initialSaveDone = false;
+
+  /// هل عناصر الواجهة (الشريط العلوي + الشريط السفلي) ظاهرة؟
+  bool _chromeVisible = true;
 
   static const Surah _placeholderSurah = Surah(
     number: 1,
@@ -184,6 +190,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _positionSaveDebounce?.cancel();
     _savePositionForPage(_currentPage);
     _pageController.dispose();
+    // إعادة الواجهة والشريط السفلي عند مغادرة القارئ.
+    widget.uiController.showChrome();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     // السماح للشاشة بالخمول مرة أخرى عند مغادرة القارئ.
     WakelockPlus.disable();
     super.dispose();
@@ -200,8 +209,19 @@ class _ReaderScreenState extends State<ReaderScreen> {
     return all.sublist(start, end + 1);
   }
 
-  Future<void> _onPageTap(
-    TapUpDetails details,
+  /// إظهار/إخفاء واجهة القراءة (الشريط العلوي + الشريط السفلي + أشرطة النظام)
+  /// — وضع التركيز على صفحة المصحف.
+  void _setChromeVisible(bool visible) {
+    if (_chromeVisible == visible) return;
+    setState(() => _chromeVisible = visible);
+    widget.uiController.chromeVisible.value = visible;
+    SystemChrome.setEnabledSystemUIMode(
+      visible ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
+    );
+  }
+
+  Future<void> _onVerseTapAt(
+    Offset localPosition,
     int page,
     double height, {
     double yOffset = 0,
@@ -209,7 +229,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final lines = _pageLines[page];
     if (lines == null || lines.isEmpty) return;
     final lineCount = lines.length;
-    final y = details.localPosition.dy - yOffset;
+    final y = localPosition.dy - yOffset;
     final lineIdx = (y / height * lineCount).floor().clamp(0, lineCount - 1);
     final range = lines[lineIdx];
     if (range == null) return; // رأس سورة أو بسملة
@@ -400,8 +420,15 @@ class _ReaderScreenState extends State<ReaderScreen> {
         final topPad = (areaH - dispH) / 2;
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTapUp: (details) =>
-              _onPageTap(details, page, dispH, yOffset: topPad),
+          // نقرة واحدة: إظهار/إخفاء الواجهة (وضع التركيز).
+          onTap: () => _setChromeVisible(!_chromeVisible),
+          // ضغطة طويلة: قائمة إجراءات الآية تحت مؤشر الإصبع.
+          onLongPressStart: (details) => _onVerseTapAt(
+            details.localPosition,
+            page,
+            dispH,
+            yOffset: topPad,
+          ),
           child: Stack(
             clipBehavior: Clip.hardEdge,
             children: [
@@ -429,7 +456,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: _parchment,
-      appBar: AppBar(
+      appBar: _chromeVisible ? AppBar(
         title: Text(_currentSurah.name),
         centerTitle: true,
         actions: [
@@ -458,14 +485,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
             ),
           ),
         ),
-      ),
+      ) : null,
       body: SafeChild(
         builder: (_) {
           WidgetsBinding.instance.addPostFrameCallback((_) => _onPageBuilt());
-          return SafeArea(
-            top: false,
-            child: _buildPageView(),
-          );
+          // في وضع التركيز تمتد الصفحة تحت شريط الحالة أيضًا.
+          return _chromeVisible
+              ? SafeArea(top: false, child: _buildPageView())
+              : _buildPageView();
         },
       ),
     );

@@ -5,6 +5,7 @@ import '../models/surah.dart';
 import '../services/bookmark_service.dart';
 import '../services/quran_service.dart';
 import '../services/settings_service.dart';
+import '../services/ui_controller.dart';
 import '../utils/arabic_digits.dart';
 import '../utils/page_transitions.dart';
 import '../widgets/mushaf_style_picker.dart';
@@ -17,11 +18,13 @@ class HomeScreen extends StatefulWidget {
     required this.quranService,
     required this.bookmarkService,
     required this.settingsService,
+    required this.uiController,
   });
 
   final QuranService quranService;
   final BookmarkService bookmarkService;
   final SettingsService settingsService;
+  final UiController uiController;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -49,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen>
         quranService: widget.quranService,
         bookmarkService: widget.bookmarkService,
         settingsService: widget.settingsService,
+        uiController: widget.uiController,
         surah: surah,
         initialVerse: verseIndex,
       ),
