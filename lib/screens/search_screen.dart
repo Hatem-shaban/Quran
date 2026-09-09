@@ -56,13 +56,13 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _openVerse(Verse verse) {
     Navigator.of(context).push(SlideRoute(
-      page: ReaderScreen(
+      page: buildReaderScreen(
         quranService: widget.quranService,
         bookmarkService: widget.bookmarkService,
         settingsService: widget.settingsService,
         uiController: widget.uiController,
-        surah: widget.quranService.surahOf(verse.chapter),
-        initialVerse: verse.number - 1,
+        chapter: verse.chapter,
+        initialVerse: verse.number,
       ),
     ));
   }

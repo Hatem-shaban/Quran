@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
@@ -26,32 +27,70 @@ Future<void> main() async {
     );
   };
 
-  final quranService = await QuranService.load();
-  final bookmarkService = BookmarkService();
-  await bookmarkService.init();
-  final settingsService = SettingsService();
-  await settingsService.init();
-  runApp(QuranApp(
-    quranService: quranService,
-    bookmarkService: bookmarkService,
-    settingsService: settingsService,
-  ));
+  runApp(const QuranApp());
 }
 
-class QuranApp extends StatelessWidget {
-  const QuranApp({
-    super.key,
-    required this.quranService,
-    required this.bookmarkService,
-    required this.settingsService,
-  });
+class QuranApp extends StatefulWidget {
+  const QuranApp({super.key});
 
-  final QuranService quranService;
-  final BookmarkService bookmarkService;
-  final SettingsService settingsService;
+  @override
+  State<QuranApp> createState() => _QuranAppState();
+}
+
+class _QuranAppState extends State<QuranApp> {
+  _AppServices? _services;
+  Object? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _bootstrap();
+  }
+
+  void _retryBootstrap() {
+    setState(() => _error = null);
+    _bootstrap();
+  }
+
+  /// تهيئة الخدمات بعد رسم أول إطار — تظهر شاشة البداية فورًا بدل
+  /// تجمّد الإقلاع. فك ملفات JSON الكبيرة يجري داخل [QuranService.load]
+  /// على isolate خلفي فلا تُجمّد واجهة المستخدم.
+  Future<void> _bootstrap() async {
+    try {
+      final quranService = await QuranService.load();
+
+      final bookmarkService = BookmarkService();
+      final settingsService = SettingsService();
+      await Future.wait([bookmarkService.init(), settingsService.init()]);
+
+      // تسخين بيانات تخطيط المصحف مبكرًا (بالتوازي مع أول ظهور).
+      unawaited(quranService.layout());
+
+      if (mounted) {
+        setState(() {
+          _services = _AppServices(
+            quranService: quranService,
+            bookmarkService: bookmarkService,
+            settingsService: settingsService,
+          );
+        });
+      }
+    } catch (error, stackTrace) {
+      // فشل التهيئة لا يُبقي المستخدم عالقًا في شاشة البداية أبدًا.
+      developer.log(
+        'Bootstrap failed: $error',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (mounted) {
+        setState(() => _error = error);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final services = _services;
     return MaterialApp(
       title: 'القرآن الكريم',
       debugShowCheckedModeBanner: false,
@@ -65,10 +104,119 @@ class QuranApp extends StatelessWidget {
       theme: _buildLightTheme(),
       darkTheme: _buildDarkTheme(),
       themeMode: ThemeMode.system,
-      home: HomeShell(
-        quranService: quranService,
-        bookmarkService: bookmarkService,
-        settingsService: settingsService,
+      home: _error != null
+          ? _BootstrapErrorView(error: _error!, onRetry: _retryBootstrap)
+          : services == null
+              ? const _SplashView()
+              : HomeShell(
+              quranService: services.quranService,
+              bookmarkService: services.bookmarkService,
+              settingsService: services.settingsService,
+            ),
+    );
+  }
+}
+
+class _AppServices {
+  const _AppServices({
+    required this.quranService,
+    required this.bookmarkService,
+    required this.settingsService,
+  });
+
+  final QuranService quranService;
+  final BookmarkService bookmarkService;
+  final SettingsService settingsService;
+}  /// شاشة فشل التهيئة — رسالة واضحة مع زر إعادة المحاولة بدل شاشة بداية
+  /// معلّقة إلى الأبد.
+class _BootstrapErrorView extends StatelessWidget {
+  const _BootstrapErrorView({required this.error, required this.onRetry});
+
+  final Object error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0E5A46),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 64,
+                color: Color(0xFFD4A843),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'تعذّر تحميل بيانات التطبيق',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 12),
+              // تفاصيل الخطأ تظهر هنا مباشرة لتشخيص المشكلة من لقطة شاشة.
+              Text(
+                error.toString(),
+                textAlign: TextAlign.center,
+                maxLines: 6,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white.withAlpha(150),
+                ),
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('إعادة المحاولة'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// شاشة البداية أثناء تهيئة الخدمات (أجزاء من الثانية عادةً).
+class _SplashView extends StatelessWidget {
+  const _SplashView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0E5A46),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'القرآن الكريم',
+              style: TextStyle(
+                fontFamily: 'Amiri Quran',
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.white.withAlpha(230),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: Color(0xFFD4A843),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -240,12 +388,12 @@ ThemeData _buildLightTheme() {
     colorScheme: colorScheme,
     fontFamily: 'Amiri Quran',
     scaffoldBackgroundColor: _cream,
-    appBarTheme: AppBarTheme(
+    appBarTheme: const AppBarTheme(
       backgroundColor: _deepGreen,
       foregroundColor: Colors.white,
       elevation: 0,
       centerTitle: true,
-      titleTextStyle: const TextStyle(
+      titleTextStyle: TextStyle(
         fontFamily: 'Amiri Quran',
         fontSize: 22,
         fontWeight: FontWeight.bold,
@@ -294,12 +442,12 @@ ThemeData _buildDarkTheme() {
     colorScheme: colorScheme,
     fontFamily: 'Amiri Quran',
     scaffoldBackgroundColor: _darkBg,
-    appBarTheme: AppBarTheme(
-      backgroundColor: const Color(0xFF12281F),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF12281F),
       foregroundColor: Colors.white,
       elevation: 0,
       centerTitle: true,
-      titleTextStyle: const TextStyle(
+      titleTextStyle: TextStyle(
         fontFamily: 'Amiri Quran',
         fontSize: 22,
         fontWeight: FontWeight.bold,

@@ -25,6 +25,10 @@ class BookmarkService extends ChangeNotifier {
   Set<String> _bookmarks = {};
   ReadingPosition? _lastRead;
 
+  /// القائمة المُحلَّلة والمُرتَّبة تُحسب مرة واحدة وتُبطل عند أي تعديل
+  /// — بدل إعادة التحليل والفرز في كل إطار واجهة.
+  List<(int, int)>? _parsedBookmarks;
+
   ReadingPosition? get lastRead => _lastRead;
 
   Future<void> init() async {
@@ -53,6 +57,7 @@ class BookmarkService extends ChangeNotifier {
     } else {
       _bookmarks.add(key);
     }
+    _parsedBookmarks = null;
     await _prefs!.setStringList(_bookmarksKey, _bookmarks.toList());
     notifyListeners();
   }
@@ -61,16 +66,19 @@ class BookmarkService extends ChangeNotifier {
   Future<void> removeBookmark(String key) async {
     if (!_bookmarks.contains(key)) return;
     _bookmarks.remove(key);
+    _parsedBookmarks = null;
     await _prefs!.setStringList(_bookmarksKey, _bookmarks.toList());
     notifyListeners();
   }
 
   /// قائمة العلامات المرجعية مفصولة إلى سورة/آية، مرتبة حسب ترتيب المصحف.
   List<(int, int)> get bookmarks {
+    final cached = _parsedBookmarks;
+    if (cached != null) return cached;
     final parsed = <(int, int)>[
       for (final key in _bookmarks) ?_parseKey(key),
     ]..sort((a, b) => a.$1 != b.$1 ? a.$1.compareTo(b.$1) : a.$2.compareTo(b.$2));
-    return parsed;
+    return _parsedBookmarks = List.unmodifiable(parsed);
   }
 
   (int, int)? _parseKey(String key) {

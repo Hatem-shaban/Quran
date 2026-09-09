@@ -34,6 +34,9 @@ class Verse {
     required this.text,
   });
 
+  /// آية فارغة ثابتة — تُستخدم لتعبئة القوائم المُخصصة مسبقًا قبل ملئها.
+  static const Verse empty = Verse(chapter: 0, number: 0, text: '');
+
   factory Verse.fromJson(Map<String, dynamic> json) => Verse(
         chapter: json['chapter'] as int,
         number: json['verse'] as int,

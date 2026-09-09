@@ -26,13 +26,13 @@ class BookmarksScreen extends StatelessWidget {
 
   void _openBookmark(BuildContext context, int chapter, int verse) {
     Navigator.of(context).push(SlideRoute(
-      page: ReaderScreen(
+      page: buildReaderScreen(
         quranService: quranService,
         bookmarkService: bookmarkService,
         settingsService: settingsService,
         uiController: uiController,
-        surah: quranService.surahOf(chapter),
-        initialVerse: verse - 1,
+        chapter: chapter,
+        initialVerse: verse,
       ),
     ));
   }

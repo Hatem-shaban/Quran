@@ -34,27 +34,44 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
+  /// آخر موضع قراءة تمت تسويته في الواجهة — يمنع إعادة البناء مع كل
+  /// تقليب صفحة في القارئ (الإشعارات المتكررة لنفس الموضع تُتجاهل).
+  ReadingPosition? _seenLastRead;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _seenLastRead = widget.bookmarkService.lastRead;
+    widget.bookmarkService.addListener(_onBookmarksChanged);
+  }
+
+  void _onBookmarksChanged() {
+    if (!mounted) return;
+    final lastRead = widget.bookmarkService.lastRead;
+    if (lastRead?.surah == _seenLastRead?.surah &&
+        lastRead?.verse == _seenLastRead?.verse) {
+      return; // لا تغيّر فعليًا — بلا إعادة بناء.
+    }
+    setState(() => _seenLastRead = lastRead);
   }
 
   @override
   void dispose() {
+    widget.bookmarkService.removeListener(_onBookmarksChanged);
     _tabController.dispose();
     super.dispose();
   }
 
   void _openSurah(BuildContext context, Surah surah, [int verseIndex = 0]) {
     Navigator.of(context).push(ScaleFadeRoute(
-      page: ReaderScreen(
+      page: buildReaderScreen(
         quranService: widget.quranService,
         bookmarkService: widget.bookmarkService,
         settingsService: widget.settingsService,
         uiController: widget.uiController,
-        surah: surah,
-        initialVerse: verseIndex,
+        chapter: surah.number,
+        initialVerse: verseIndex > 0 ? verseIndex : 1,
       ),
     ));
   }
@@ -75,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final lastRead = widget.bookmarkService.lastRead;
+    final lastRead = _seenLastRead;
 
     return Scaffold(
       body: CustomScrollView(
@@ -150,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildSurahList(context, theme, lastRead),
+                _buildSurahList(context, theme),
                 _buildJuzList(context, theme),
               ],
             ),
@@ -160,43 +177,16 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
   Widget _buildSurahList(
-      BuildContext context, ThemeData theme, dynamic lastRead) {
+      BuildContext context, ThemeData theme) {
+    final surahs = widget.quranService.surahs;
     return ListView.separated(
-      itemCount: widget.quranService.surahs.length,
+      itemCount: surahs.length,
       separatorBuilder: (_, _) => const Divider(height: 1, indent: 72),
       itemBuilder: (context, index) {
-        final surah = widget.quranService.surahs[index];
-        return ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                toArabicDigits(surah.number),
-                style: TextStyle(
-                  color: theme.colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          title: Text(
-            surah.name,
-            style: const TextStyle(fontSize: 18),
-          ),
-          subtitle: Text(
-            '${surah.revelation} · ${toArabicDigits(surah.verseCount)} آية',
-            style: TextStyle(
-              color: theme.colorScheme.outline,
-              fontSize: 13,
-            ),
-          ),
-          trailing:
-              Icon(Icons.chevron_left, color: theme.colorScheme.outline),
+        final surah = surahs[index];
+        return _SurahTile(
+          surah: surah,
+          theme: theme,
           onTap: () => _openSurah(context, surah),
         );
       },
@@ -209,41 +199,114 @@ class _HomeScreenState extends State<HomeScreen>
       separatorBuilder: (_, _) => const Divider(height: 1, indent: 72),
       itemBuilder: (context, index) {
         final juz = Juz.all[index];
-        final startSurah = widget.quranService.surahOf(juz.startSurah);
-        final endSurah = widget.quranService.surahOf(juz.endSurah);
-
-        return ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.tertiaryContainer,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                toArabicDigits(juz.number),
-                style: TextStyle(
-                  color: theme.colorScheme.onTertiaryContainer,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          title: Text(juz.name, style: const TextStyle(fontSize: 18)),
-          subtitle: Text(
-            '${startSurah.name} ${toArabicDigits(juz.startVerse)} — ${endSurah.name} ${toArabicDigits(juz.endVerse)}',
-            textDirection: TextDirection.rtl,
-            style: TextStyle(
-              color: theme.colorScheme.outline,
-              fontSize: 13,
-            ),
-          ),
-          trailing:
-              Icon(Icons.chevron_left, color: theme.colorScheme.outline),
+        return _JuzTile(
+          juz: juz,
+          startSurah: widget.quranService.surahOf(juz.startSurah),
+          endSurah: widget.quranService.surahOf(juz.endSurah),
+          theme: theme,
           onTap: () => _openJuz(context, juz),
         );
       },
+    );
+  }
+}
+
+/// بلاطة السورة في القائمة الرئيسية.
+class _SurahTile extends StatelessWidget {
+  const _SurahTile({
+    required this.surah,
+    required this.theme,
+    required this.onTap,
+  });
+
+  final Surah surah;
+  final ThemeData theme;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primaryContainer,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: Text(
+            toArabicDigits(surah.number),
+            style: TextStyle(
+              color: theme.colorScheme.onPrimaryContainer,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+      title: Text(
+        surah.name,
+        style: const TextStyle(fontSize: 18),
+      ),
+      subtitle: Text(
+        '${surah.revelation} · ${toArabicDigits(surah.verseCount)} آية',
+        style: TextStyle(
+          color: theme.colorScheme.outline,
+          fontSize: 13,
+        ),
+      ),
+      trailing: Icon(Icons.chevron_left, color: theme.colorScheme.outline),
+      onTap: onTap,
+    );
+  }
+}
+
+/// بلاطة الجزء في قائمة الأجزاء.
+class _JuzTile extends StatelessWidget {
+  const _JuzTile({
+    required this.juz,
+    required this.startSurah,
+    required this.endSurah,
+    required this.theme,
+    required this.onTap,
+  });
+
+  final Juz juz;
+  final Surah startSurah;
+  final Surah endSurah;
+  final ThemeData theme;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.tertiaryContainer,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: Text(
+            toArabicDigits(juz.number),
+            style: TextStyle(
+              color: theme.colorScheme.onTertiaryContainer,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+      title: Text(juz.name, style: const TextStyle(fontSize: 18)),
+      subtitle: Text(
+        '${startSurah.name} ${toArabicDigits(juz.startVerse)} — ${endSurah.name} ${toArabicDigits(juz.endVerse)}',
+        textDirection: TextDirection.rtl,
+        style: TextStyle(
+          color: theme.colorScheme.outline,
+          fontSize: 13,
+        ),
+      ),
+      trailing: Icon(Icons.chevron_left, color: theme.colorScheme.outline),
+      onTap: onTap,
     );
   }
 }
