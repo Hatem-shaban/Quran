@@ -54,14 +54,34 @@ def text_extent(path, exclude_frame):
 
 def window_extent(path):
     """King Fahd digital editions: an ornamental frame surrounds a central
-    text window. Measure the window's left/right margins by scanning a
-    middle horizontal strip with per-column run analysis (robust to the
-    decorated frame and the tinted parchment inside it)."""
-    a = np.asarray(Image.open(path).convert("L")).astype(int)
-    h, w = a.shape
-    strip = a[int(h * 0.40): int(h * 0.60)]
-    ink = strip.min(axis=0) < 210  # column contains any ink in the strip
-    # longest run of inked columns = the text window
+    text window. Returns 6 fractions of the page:
+      [fl, fr, ft, fb, tl, tr] — frame left/right/top/bottom outer bounds,
+      then the text window's left/right margins.
+    The reader zooms so the FRAME fills the screen height (cropping only
+    decoration), guarded so the TEXT window never exceeds the width."""
+    a = np.asarray(
+        Image.open(path).convert("RGB").resize((360, 512), Image.BILINEAR)
+    ).astype(int)
+    h, w, _ = a.shape
+    # الخلفية: لون الرق الخارجي (البكسلات المنتظمة)، وأي اختلاف واضح عنه زخرفة.
+    bg = np.median(a[::8, ::8].reshape(-1, 3), axis=0)
+    deco = np.abs(a - bg).max(axis=2) > 28
+    rows = deco.sum(axis=1) > 5
+    cols = deco.sum(axis=0) > 5
+    if not rows.any() or not cols.any():
+        return [0.03, 0.03, 0.03, 0.03, 0.06, 0.06]
+    t = int(np.argmax(rows))
+    b = h - 1 - int(np.argmax(rows[::-1]))
+    l = int(np.argmax(cols))
+    r = w - 1 - int(np.argmax(cols[::-1]))
+
+    def frac(v, total, lo=0.006, hi=0.30):
+        return round(min(max(v / total, lo), hi), 4)
+
+    # نافذة النص: أطول امتداد لأعمدة متجاوبة بها حبر في الشريط الأوسط.
+    gray = a.mean(axis=2)
+    strip = gray[int(h * 0.40): int(h * 0.60)]
+    ink = strip.min(axis=0) < 210
     best = (0, 0)
     start = None
     for x, v in enumerate(ink):
@@ -75,21 +95,40 @@ def window_extent(path):
         best = (start, w)
     x0, x1 = best
     if x1 <= x0:
-        return [0.03, 0.03]
-    left = min(max(x0 / w, 0.006), 0.30)
-    right = min(max((w - x1) / w, 0.006), 0.30)
-    return [round(left, 4), round(right, 4)]
+        tl = tr = 0.06
+    else:
+        tl = frac(x0, w, 0.01, 0.35)
+        tr = frac(w - x1, w, 0.01, 0.35)
+    return [frac(l, w), frac(w - 1 - r, w), frac(t, h), frac(h - 1 - b, h), tl, tr]
 
 
-data = {}
-for name, prefix, ext, ef in [
+import sys
+
+styles = [
     ("madani", "assets/pages", "png", False),
     ("tajweed", "assets/tajweed", "jpg", True),
     ("mumtaz", "assets/mumtaz", "webp", "window"),
     ("khas", "assets/khas", "webp", "window"),
     ("jawami", "assets/jawami", "webp", "window"),
     ("wasat", "assets/wasat", "webp", "window"),
-]:
+]
+
+# --only=a,b: أعد توليد أنماط محددة فقط مع الإبقاء على بقية البيانات القائمة.
+only = None
+for arg in sys.argv[1:]:
+    if arg.startswith("--only="):
+        only = set(arg.split("=")[1].split(","))
+
+data = {}
+try:
+    with open("assets/data/page_extents.json", encoding="utf-8") as f:
+        data = json.load(f)
+except FileNotFoundError:
+    pass
+
+for name, prefix, ext, ef in styles:
+    if only is not None and name not in only:
+        continue
     pages = {}
     for p in range(1, 605):
         path = f"{prefix}/page{p:03d}.{ext}"

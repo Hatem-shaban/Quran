@@ -187,13 +187,35 @@ class QuranService {
           .toList(growable: false);
     }
 
-    final extents = <String, Map<int, ({double left, double right})>>{};
+    final extents = <String,
+        Map<int,
+            ({double left, double right, double top, double bottom, double textLeft, double textRight})>>{};
     for (final e in results[1].entries) {
-      final pages = <int, ({double left, double right})>{};
+      final pages = <int,
+          ({double left, double right, double top, double bottom, double textLeft, double textRight})>{};
       for (final pe in (e.value! as Map<String, dynamic>).entries) {
         final arr = (pe.value! as List<dynamic>).cast<num>();
-        pages[int.parse(pe.key)] =
-            (left: arr[0].toDouble(), right: arr[1].toDouble());
+        // التنسيق الجديد: [إطار_يسار، إطار_يمين، إطار_أعلى، إطار_أسفل، نص_يسار، نص_يمين]
+        // القديم (عنصران): حدود النص نفسها، وبلا حدود رأسية (٠ = لا إطار).
+        if (arr.length >= 6) {
+          pages[int.parse(pe.key)] = (
+            left: arr[0].toDouble(),
+            right: arr[1].toDouble(),
+            top: arr[2].toDouble(),
+            bottom: arr[3].toDouble(),
+            textLeft: arr[4].toDouble(),
+            textRight: arr[5].toDouble(),
+          );
+        } else {
+          pages[int.parse(pe.key)] = (
+            left: arr[0].toDouble(),
+            right: arr[1].toDouble(),
+            top: 0,
+            bottom: 0,
+            textLeft: arr[0].toDouble(),
+            textRight: arr[1].toDouble(),
+          );
+        }
       }
       extents[e.key] = pages;
     }
@@ -306,9 +328,13 @@ class MushafLayout {
   /// أو null للخطوط الزخرفية (رأس سورة / بسملة).
   final Map<int, List<List<int>?>> lines;
 
-  /// لكل نمط وصفحة: الحدود اليسرى/اليمنى لكتلة النص (كسور من عرض الصورة)
-  /// — تُستخدم لتكبير الصفحة إلى أقصى حجم لا يُقصّ فيه أي نص.
-  final Map<String, Map<int, ({double left, double right})>> extents;
+  /// لكل نمط وصفحة: الحدود الخارجية للإطار الزخرفي (يسار/يمين/أعلى/أسفل)
+  /// وحدود نافذة النص (يسار/يمين) — كسور من أبعاد الصورة.
+  /// القارئ يُكبِّر ليملأ الإطار للشاشة عموديًا (قصّ الزخرفة فقط) مع ضمان
+  /// بقاء نافذة النص كاملة داخل العرض.
+  final Map<String,
+      Map<int,
+          ({double left, double right, double top, double bottom, double textLeft, double textRight})>> extents;
 
   /// عدد أسطر الصفحة (٠ إن غابت البيانات).
   int lineCount(int page) => lines[page]?.length ?? 0;

@@ -466,29 +466,38 @@ class _MushafPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final extents = layout?.extents[style.name]?[page];
-    final left = extents?.left ?? 0.03;
-    final right = extents?.right ?? 0.03;
-    // نص كامل: كتلة النص تشغل (1 - left - right) من عرض الصورة.
-    // لا نسمح بقص أكثر من ٦٪ من كل جانب حتى مع بيانات غير دقيقة.
-    final usable = (1 - left - right).clamp(0.88, 1.0);
-    final scaleH = areaH / style.imgH;
-    // هامش أمان ٢٪: قياس حدود النص تقريبي، وقد تُقصّ حروف متطاولة
-    // عند الحافة إذا مُلئ العرض بالكامل.
-    final scaleW = (areaW * 0.98) / (style.imgW * usable);
-    var scale = scaleW < scaleH ? scaleW : scaleH;
-    // تعبئة الشاشة عموديًا: إن كان ملء الارتفاع يُبقي كتلة النص المقيسة
-    // كاملة داخل العرض (يقصّ الإطار الزخرفي فقط في إصدارات مجمع الملك فهد)
-    // فكبّر حتى يملأ الارتفاع بالكامل — بلا أشرطة فارغة أعلى/أسفل.
-    final textW = style.imgW * (1 - left - right);
-    if (scaleH > scale && textW * scaleH <= areaW * 0.98) {
-      scale = scaleH;
+    final ext = layout?.extents[style.name]?[page];
+    // نسخ مجمع الملك فهد: left/right/top/bottom حدود الإطار الزخرفي الخارجي
+    // وtextLeft/textRight حدود نافذة النص داخله. النسخ القديمة (مدني/تجويد):
+    // left/right حدود النص نفسها ولا إطار رأسي (top = bottom = 0).
+    final hasFrame = (ext?.top ?? 0) > 0 || (ext?.bottom ?? 0) > 0;
+    final textL = hasFrame ? ext!.textLeft : (ext?.left ?? 0.03);
+    final textR = hasFrame ? ext!.textRight : (ext?.right ?? 0.03);
+    // سقف التكبير: نافذة النص كاملة داخل العرض (هامش أمان ٢٪ للحروف المتطاولة).
+    final scaleText =
+        (areaW * 0.98) / (style.imgW * (1 - textL - textR).clamp(0.5, 1.0));
+    final scaleFitH = areaH / style.imgH;
+
+    double scale;
+    if (hasFrame) {
+      // املأ الارتفاع بكتلة الإطار، مع سقف صارم: عرض الإطار كاملًا (بحوافه
+      // الزخرفية الجانبية وزواياه) يجب أن يبقى مرئيًا — لا قصّ في الحدود
+      // الجانبية إطلاقًا؛ الفائض العمودي يظهر كهامش رقّ طبيعي أعلى/أسفل.
+      final scaleFill = areaH /
+          (style.imgH * (1 - ext!.top - ext.bottom).clamp(0.4, 1.0));
+      final scaleFrameW =
+          areaW / (style.imgW * (1 - ext.left - ext.right).clamp(0.4, 1.0));
+      scale = scaleFill < scaleFrameW ? scaleFill : scaleFrameW;
+    } else {
+      // بلا إطار: أكبر حجم لا يُقصّ فيه نص — عرضًا أو ارتفاعًا أيهما أقيد.
+      scale = scaleText < scaleFitH ? scaleText : scaleFitH;
     }
     final dispW = style.imgW * scale;
     final dispH = style.imgH * scale;
-    // نوسّط كتلة النص (وليس الصورة كاملة) أفقيًا حتى لا يُقصّ نص
-    // عند حافة أضيق من الأخرى.
-    final shift = (areaW - dispW) / 2 + dispW * (right - left) / 2;
+    // نوسّط الإطار (أو كتلة النص في النسخ القديمة) أفقيًا لقصّ متساوٍ من الجانبين.
+    final shift = (areaW - dispW) / 2 +
+        dispW * ((hasFrame ? ext!.right : textR) - (hasFrame ? ext!.left : textL)) /
+            2;
     final topPad = (areaH - dispH) / 2;
 
     return GestureDetector(
