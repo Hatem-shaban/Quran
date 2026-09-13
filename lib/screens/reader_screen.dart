@@ -423,10 +423,15 @@ class _ReaderScreenState extends State<ReaderScreen> {
               ),
             )
           : null,
-      // في وضع التركيز تمتد الصفحة تحت شريط الحالة أيضًا.
-      body: _chromeVisible
-          ? SafeArea(top: false, child: pageView)
-          : pageView,
+      // في وضع التركيز تمتد الصفحة تحت شريط الحالة وأشرطة النظام أيضًا.
+      // مهم: الشجرة ثابتة (SafeArea دائمًا مع تبديل الحشوة فقط، لا استبدال
+      // للمكوّن) — استبدال SafeArea بـ PageView مباشرة يدمّر موضع التمرير
+      // ويعيد القارئ إلى صفحة البداية عند الخروج من وضع ملء الشاشة.
+      body: SafeArea(
+        top: false,
+        bottom: _chromeVisible,
+        child: pageView,
+      ),
     );
   }
 
