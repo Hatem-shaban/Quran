@@ -476,7 +476,14 @@ class _MushafPage extends StatelessWidget {
     // هامش أمان ٢٪: قياس حدود النص تقريبي، وقد تُقصّ حروف متطاولة
     // عند الحافة إذا مُلئ العرض بالكامل.
     final scaleW = (areaW * 0.98) / (style.imgW * usable);
-    final scale = scaleW < scaleH ? scaleW : scaleH;
+    var scale = scaleW < scaleH ? scaleW : scaleH;
+    // تعبئة الشاشة عموديًا: إن كان ملء الارتفاع يُبقي كتلة النص المقيسة
+    // كاملة داخل العرض (يقصّ الإطار الزخرفي فقط في إصدارات مجمع الملك فهد)
+    // فكبّر حتى يملأ الارتفاع بالكامل — بلا أشرطة فارغة أعلى/أسفل.
+    final textW = style.imgW * (1 - left - right);
+    if (scaleH > scale && textW * scaleH <= areaW * 0.98) {
+      scale = scaleH;
+    }
     final dispW = style.imgW * scale;
     final dispH = style.imgH * scale;
     // نوسّط كتلة النص (وليس الصورة كاملة) أفقيًا حتى لا يُقصّ نص

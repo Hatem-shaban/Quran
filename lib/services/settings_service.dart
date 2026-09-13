@@ -21,10 +21,12 @@ enum QuranFont {
   final String familyName;
 }
 
-/// أنماط صفحات المصحف المضمّنة في التطبيق.
+/// أنماط صفحات المصحف المضمّنة في التطبيق — كلها بنسخة حفص عن عاصم
+/// (توزيع الصفحات المعياري ٦٠٤ صفحات) بخطوط مختلفة.
 enum MushafStyle {
   madani(
     'المصحف المدني',
+    'خط المدينة الرسمي',
     'assets/pages',
     'png',
     1024,
@@ -32,16 +34,59 @@ enum MushafStyle {
   ),
   tajweed(
     'مصحف التجويد الملون',
+    'ملوّن بأحكام التجويد',
     'assets/tajweed',
     'jpg',
     645,
     1000,
+  ),
+  mumtaz(
+    'المصحف الممتاز',
+    'مجمع الملك فهد — خط ممتاز',
+    'assets/mumtaz',
+    'webp',
+    945,
+    1359,
+  ),
+  khas(
+    'المصحف الخاص',
+    'مجمع الملك فهد — خط خاص',
+    'assets/khas',
+    'webp',
+    1241,
+    1713,
+  ),
+  jawami(
+    'المصحف الجوامعي',
+    'مجمع الملك فهد — خط جوامعي',
+    'assets/jawami',
+    'webp',
+    1152,
+    1654,
+  ),
+  wasat(
+    'المصحف الوسط',
+    'مجمع الملك فهد — خط وسط',
+    'assets/wasat',
+    'webp',
+    680,
+    945,
   );
 
-  const MushafStyle(this.label, this.folder, this.ext, this.imgW, this.imgH);
+  const MushafStyle(
+    this.label,
+    this.description,
+    this.folder,
+    this.ext,
+    this.imgW,
+    this.imgH,
+  );
 
   /// الاسم المعروض للمستخدم.
   final String label;
+
+  /// وصف قصير يظهر في نافذة الاختيار.
+  final String description;
 
   /// مجلد الأصول الذي يحتوي صور الصفحات.
   final String folder;

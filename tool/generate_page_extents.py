@@ -52,14 +52,51 @@ def text_extent(path, exclude_frame):
     return [round(left, 4), round(right, 4)]
 
 
+def window_extent(path):
+    """King Fahd digital editions: an ornamental frame surrounds a central
+    text window. Measure the window's left/right margins by scanning a
+    middle horizontal strip with per-column run analysis (robust to the
+    decorated frame and the tinted parchment inside it)."""
+    a = np.asarray(Image.open(path).convert("L")).astype(int)
+    h, w = a.shape
+    strip = a[int(h * 0.40): int(h * 0.60)]
+    ink = strip.min(axis=0) < 210  # column contains any ink in the strip
+    # longest run of inked columns = the text window
+    best = (0, 0)
+    start = None
+    for x, v in enumerate(ink):
+        if v and start is None:
+            start = x
+        elif not v and start is not None:
+            if x - start > best[1] - best[0]:
+                best = (start, x)
+            start = None
+    if start is not None and w - start > best[1] - best[0]:
+        best = (start, w)
+    x0, x1 = best
+    if x1 <= x0:
+        return [0.03, 0.03]
+    left = min(max(x0 / w, 0.006), 0.30)
+    right = min(max((w - x1) / w, 0.006), 0.30)
+    return [round(left, 4), round(right, 4)]
+
+
 data = {}
 for name, prefix, ext, ef in [
     ("madani", "assets/pages", "png", False),
     ("tajweed", "assets/tajweed", "jpg", True),
+    ("mumtaz", "assets/mumtaz", "webp", "window"),
+    ("khas", "assets/khas", "webp", "window"),
+    ("jawami", "assets/jawami", "webp", "window"),
+    ("wasat", "assets/wasat", "webp", "window"),
 ]:
     pages = {}
     for p in range(1, 605):
-        pages[str(p)] = text_extent(f"{prefix}/page{p:03d}.{ext}", ef)
+        path = f"{prefix}/page{p:03d}.{ext}"
+        if ef == "window":
+            pages[str(p)] = window_extent(path)
+        else:
+            pages[str(p)] = text_extent(path, bool(ef))
     data[name] = pages
 
 with open("assets/data/page_extents.json", "w", encoding="utf-8") as f:
@@ -69,3 +106,5 @@ print("madani pages:", len(data["madani"]))
 print("tajweed pages:", len(data["tajweed"]))
 print("sample p422 madani:", data["madani"]["422"])
 print("sample p422 tajweed:", data["tajweed"]["422"])
+for name in ("mumtaz", "khas", "jawami", "wasat"):
+    print(f"sample p422 {name}:", data[name]["422"])

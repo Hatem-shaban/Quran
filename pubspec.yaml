@@ -64,6 +64,10 @@ flutter:
     - assets/data/
     - assets/pages/
     - assets/tajweed/
+    - assets/mumtaz/
+    - assets/khas/
+    - assets/jawami/
+    - assets/wasat/
 
   fonts:
     - family: Amiri Quran

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/settings_service.dart';
 
-/// نافذة اختيار نمط المصحف (مدني / تجويد ملون).
+/// نافذة اختيار نمط المصحف (مدني / تجويد / طبعات مجمع الملك فهد).
 /// تُرجع النمط المختار أو null عند الإلغاء.
 Future<MushafStyle?> showMushafStylePicker(
   BuildContext context,
@@ -16,17 +16,15 @@ Future<MushafStyle?> showMushafStylePicker(
         for (final s in MushafStyle.values)
           ListTile(
             leading: Icon(
-              s == MushafStyle.tajweed
-                  ? Icons.palette_outlined
-                  : Icons.menu_book_outlined,
+              switch (s) {
+                MushafStyle.tajweed => Icons.palette_outlined,
+                MushafStyle.madani => Icons.menu_book_outlined,
+                _ => Icons.auto_stories_outlined,
+              },
               color: Theme.of(ctx).colorScheme.primary,
             ),
             title: Text(s.label),
-            subtitle: Text(
-              s == MushafStyle.tajweed
-                  ? 'ملوّن بأحكام التجويد'
-                  : 'الرسم العثماني الرسمي',
-            ),
+            subtitle: Text(s.description),
             trailing: s == settings.style
                 ? Icon(Icons.check_circle,
                     color: Theme.of(ctx).colorScheme.primary)

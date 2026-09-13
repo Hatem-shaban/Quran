@@ -35,6 +35,10 @@ void main() {
     final layout = await service.layout();
     expect(layout.lineCount(422), greaterThan(0));
     expect(layout.extents['madani']?[1], isNotNull);
+    // كل الأنماط الستة لها حدود نص لكل الصفحات.
+    for (final name in ['madani', 'tajweed', 'mumtaz', 'khas', 'jawami', 'wasat']) {
+      expect(layout.extents[name]?.length, 604, reason: name);
+    }
   });
 
   test('BookmarkService يعمل بعد التهيئة', () async {
